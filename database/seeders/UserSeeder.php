@@ -31,7 +31,7 @@ class UserSeeder extends Seeder
         }
 
 
-        // Crea Utente Standard
+        // Crea Utente Standard   
         $user = User::firstOrCreate(
             ['email' => 'user@example.com'], // Chiave per firstOrCreate
             [                            // Valori da creare se non esiste

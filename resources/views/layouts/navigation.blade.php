@@ -19,11 +19,17 @@
                         {{ __('Dashboard') }}
                     </a>
                 </li>
+                {{-- NUOVO LINK PER ANAGRAFICHE/PROFILI --}}
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('profiles.*') ? 'active' : '' }}" href="{{ route('profiles.index') }}">
+                        {{ __('Anagrafiche') }} {{-- Testo visualizzato, puoi cambiarlo in 'Profili' se preferisci --}}
+                    </a>
+                </li>
                 {{-- Aggiungi qui altri link di navigazione principali --}}
                 {{-- Esempio:
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('anagrafiche.*') ? 'active' : '' }}" href="{{ route('anagrafiche.index') }}">
-                        {{ __('Anagrafiche') }}
+                    <a class="nav-link {{ request()->routeIs('offices.*') ? 'active' : '' }}" href="{{ route('offices.index') }}">
+                        {{ __('Uffici') }}
                     </a>
                 </li>
                 --}}
@@ -37,7 +43,7 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUserMenu">
                         <li>
-                            <a class="dropdown-item" href="{{ route('profile.edit') }}">
+                            <a class="dropdown-item" href="{{ route('profile.edit') }}"> {{-- Questa è la rotta del profilo utente di Breeze --}}
                                 {{ __('Profile') }}
                             </a>
                         </li>

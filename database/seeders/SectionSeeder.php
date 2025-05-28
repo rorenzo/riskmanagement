@@ -56,3 +56,4 @@ class SectionSeeder extends Seeder
         }
     }
 }
+ 

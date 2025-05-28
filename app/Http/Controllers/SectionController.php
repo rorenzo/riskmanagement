@@ -28,9 +28,9 @@ class SectionController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created resource in storage.  
      */
-    public function store(Request $request) // Sostituisci Request con la tua FormRequest
+    public function store(Request $request) // Sostituisci Request con la tua FormRequest   
     {
         // Esempio:
         // $validatedData = $request->validate([
@@ -46,7 +46,7 @@ class SectionController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Section $section)
+    public function show(Section $section) 
     {
         // Esempio: $section->load('office');
         // return view('sections.show', compact('section'));
@@ -90,3 +90,4 @@ class SectionController extends Controller
         return "SectionController@destroy - Eliminazione Sezione ID: {$section->id} (da implementare)";
     }
 }
+ 

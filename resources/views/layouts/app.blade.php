@@ -11,7 +11,9 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
         {{-- Vite gestirà il caricamento di app.css (che include Bootstrap) e app.js (che include Bootstrap JS) --}}
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+       
+        @stack('styles') {{-- Qui verranno caricati gli stili specifici della pagina --}}
+
     </head>
     <body class="d-flex flex-column min-vh-100 bg-light"> {{-- bg-light è un grigio chiaro di Bootstrap, min-vh-100 per full height --}}
 
@@ -40,6 +42,8 @@
             </div>
         </footer>
         --}}
-
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @stack('scripts') {{-- Qui verranno caricati gli script specifici della pagina --}}
+        
     </body>
 </html>

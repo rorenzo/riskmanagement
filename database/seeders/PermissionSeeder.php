@@ -27,6 +27,9 @@ class PermissionSeeder extends Seeder
             'sorveglianza_sanitaria',
             'scadenza_sorveglianza',
             'movimenti',
+            'ppe',
+            'healthCheckRecord',
+            'safetyCourse',
             'corsi',
             'user', // Aggiungiamo anche 'user' per la gestione utenti
             'role', // E 'role' per la gestione ruoli

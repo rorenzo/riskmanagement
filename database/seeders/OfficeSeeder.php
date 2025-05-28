@@ -12,7 +12,7 @@ class OfficeSeeder extends Seeder
     /**
      * Run the database seeds.
      */
-    public function run(): void
+    public function run(): void 
     {
         // Opzionale: Svuota la tabella prima di popolarla per evitare duplicati se il seeder viene eseguito più volte
         // DB::table('reparti')->truncate(); // O Reparto::truncate(); se non ci sono foreign key constraints

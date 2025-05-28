@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models; 
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -34,5 +34,5 @@ class Office extends Model
         return $this->hasMany(Section::class);
     }
 
-    // Qui puoi definire eventuali altre relazioni
+    // Qui puoi definire eventuali altre relazioni 
 }
