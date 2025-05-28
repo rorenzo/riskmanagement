@@ -203,7 +203,6 @@ class AnagraficaController extends Controller
             // La relazione sectionHistory è ordinata per data_inizio_assegnazione desc, quindi il primo è l'ultimo attivo
             $currentPivotData = $profile->sectionHistory()->wherePivotNull('data_fine_assegnazione')->first();
         }
-
         $data_inizio_assegnazione = $currentPivotData ? optional($currentPivotData->pivot->data_inizio_assegnazione)->format('Y-m-d') : null;
         $note_assegnazione = $currentPivotData ? $currentPivotData->pivot->note : null;
 
@@ -234,8 +233,18 @@ class AnagraficaController extends Controller
             'residenza_cap' => 'nullable|string|max:5',
             'residenza_nazione' => 'nullable|string|max:255',
             'current_section_id' => 'nullable|exists:sections,id', // Questo è l'ID della NUOVA sezione desiderata
-            'data_inizio_assegnazione' => 'required_with:current_section_id|date_format:Y-m-d|nullable', // Data per la NUOVA assegnazione
-            'note_assegnazione' => 'nullable|string', // Note per la NUOVA assegnazione
+'data_inizio_assegnazione' => ['nullable', 'date_format:Y-m-d',
+                Rule::requiredIf(function () use ($request, $profile) {
+                    $nuova_section_id_richiesta = $request->input('current_section_id');
+                    if (empty($nuova_section_id_richiesta)) {
+                        return false; // Non richiesta se nessuna sezione è selezionata
+                    }
+                    $attualeAssegnazioneAttivaPivot = $profile->sectionHistory()->wherePivotNull('data_fine_assegnazione')->first();
+                    $attuale_section_id_attiva = $attualeAssegnazioneAttivaPivot ? $attualeAssegnazioneAttivaPivot->id : null;
+                    // Richiesta se si assegna una nuova sezione (diversa o da nessuna)
+                    return $nuova_section_id_richiesta != $attuale_section_id_attiva;
+                })
+            ],            'note_assegnazione' => 'nullable|string', // Note per la NUOVA assegnazione
         ]);
 
         try {
@@ -243,7 +252,10 @@ class AnagraficaController extends Controller
 
             // 1. Aggiorna i dati base del profilo
             $profileDataForUpdate = collect($validatedData)->except(['current_section_id', 'data_inizio_assegnazione', 'note_assegnazione'])->toArray();
+            
             $profile->update($profileDataForUpdate);
+            
+            
 
             // 2. Gestione del cambio di sezione (se specificata una nuova sezione)
             $nuova_section_id_richiesta = $validatedData['current_section_id'] ?? null;

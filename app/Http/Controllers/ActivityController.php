@@ -12,20 +12,19 @@ class ActivityController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-    {
-        // $activities = Activity::latest()->paginate(10);
-        // return view('activities.index', compact('activities'));
-        $activities = Activity::orderBy('name')->get();
-        return response()->json($activities); // Placeholder
-    }
+{
+    $activities = Activity::withCount(['ppes', 'healthSurveillances', 'profiles'])
+                            ->orderBy('name')
+                            ->get();
+    return view('activities.index', compact('activities'));
+}
 
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-        // return view('activities.create');
-        return "ActivityController@create - Form Creazione Attività (da implementare)";
+         return view('activities.create');
     }
 
     /**
@@ -40,8 +39,7 @@ class ActivityController extends Controller
 
         $activity = Activity::create($validatedData);
 
-        // return redirect()->route('activities.index')->with('success', 'Attività creata con successo.');
-        return response()->json(['message' => 'Attività creata', 'data' => $activity], 201); // Placeholder
+         return redirect()->route('activities.index')->with('success', 'Attività creata con successo.');
     }
 
     /**
@@ -49,9 +47,8 @@ class ActivityController extends Controller
      */
     public function show(Activity $activity)
     {
-        // $activity->load('profiles'); // Per vedere i profili associati
-        // return view('activities.show', compact('activity'));
-        return response()->json($activity->load('profiles')); // Placeholder
+         $activity->load('profiles'); // Per vedere i profili associati
+         return view('activities.show', compact('activity'));
     }
 
     /**
@@ -59,8 +56,7 @@ class ActivityController extends Controller
      */
     public function edit(Activity $activity)
     {
-        // return view('activities.edit', compact('activity'));
-        return "ActivityController@edit - Form Modifica Attività ID: {$activity->id} (da implementare)";
+         return view('activities.edit', compact('activity'));
     }
 
     /**
@@ -75,8 +71,7 @@ class ActivityController extends Controller
 
         $activity->update($validatedData);
 
-        // return redirect()->route('activities.index')->with('success', 'Attività aggiornata con successo.');
-        return response()->json(['message' => 'Attività aggiornata', 'data' => $activity]); // Placeholder
+         return redirect()->route('activities.index')->with('success', 'Attività aggiornata con successo.');
     }
 
     /**

@@ -1,4 +1,3 @@
-
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
@@ -30,6 +29,49 @@
 
         <main class="flex-grow-1 py-4"> {{-- flex-grow-1 per farla espandere, py-4 per padding --}}
             <div class="container">
+                {{-- Sezione per i Messaggi Flash --}}
+                @if (session('success'))
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @if (session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        {{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @if (session('warning'))
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        {{ session('warning') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @if (session('info'))
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        {{ session('info') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                {{-- Mostra errori di validazione generali (non specifici di un campo) --}}
+                @if ($errors->any() && !$errors->hasAny(array_keys(request()->input()))) {{-- Mostra solo se non ci sono errori specifici dei campi già gestiti --}}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>{{ __('Oops! Qualcosa è andato storto.') }}</strong>
+                        <ul class="mt-2 mb-0">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+                {{-- Fine Sezione Messaggi Flash --}}
+
                 {{ $slot }}
             </div>
         </main>

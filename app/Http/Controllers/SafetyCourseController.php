@@ -13,20 +13,20 @@ class SafetyCourseController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-    {
-        // $safetyCourses = SafetyCourse::latest()->paginate(10);
-        // return view('safety_courses.index', compact('safetyCourses'));
-        $safetyCourses = SafetyCourse::orderBy('name')->get();
-        return response()->json($safetyCourses); // Placeholder
-    }
+{
+    // Per DataTables client-side
+    $safetyCourses = SafetyCourse::orderBy('name')->get();
+    // Se vuoi il conteggio dei profili che hanno frequentato ciascun corso (attraverso la tabella pivot):
+    // $safetyCourses = SafetyCourse::withCount('profiles')->orderBy('name')->get();
+    return view('safety_courses.index', compact('safetyCourses'));
+}
 
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-        // return view('safety_courses.create');
-        return "SafetyCourseController@create - Form Creazione Corso (da implementare)";
+         return view('safety_courses.create');
     }
 
     /**
@@ -42,8 +42,7 @@ class SafetyCourseController extends Controller
 
         $safetyCourse = SafetyCourse::create($validatedData);
 
-        // return redirect()->route('safety_courses.index')->with('success', 'Corso di Sicurezza creato con successo.');
-        return response()->json(['message' => 'Corso di Sicurezza creato', 'data' => $safetyCourse], 201); // Placeholder
+         return redirect()->route('safety_courses.index')->with('success', 'Corso di Sicurezza creato con successo.');
     }
 
     /**
@@ -51,9 +50,8 @@ class SafetyCourseController extends Controller
      */
     public function show(SafetyCourse $safetyCourse)
     {
-        // $safetyCourse->load('profiles'); // Per vedere i profili che hanno frequentato
-        // return view('safety_courses.show', compact('safetyCourse'));
-        return response()->json($safetyCourse->load('profiles')); // Placeholder
+       $safetyCourse->load('profiles');
+         return view('safety_courses.show', compact('safetyCourse'));
     }
 
     /**
@@ -61,8 +59,7 @@ class SafetyCourseController extends Controller
      */
     public function edit(SafetyCourse $safetyCourse)
     {
-        // return view('safety_courses.edit', compact('safetyCourse'));
-        return "SafetyCourseController@edit - Form Modifica Corso ID: {$safetyCourse->id} (da implementare)";
+         return view('safety_courses.edit', compact('safetyCourse'));
     }
 
     /**
@@ -78,8 +75,7 @@ class SafetyCourseController extends Controller
 
         $safetyCourse->update($validatedData);
 
-        // return redirect()->route('safety_courses.index')->with('success', 'Corso di Sicurezza aggiornato con successo.');
-        return response()->json(['message' => 'Corso di Sicurezza aggiornato', 'data' => $safetyCourse]); // Placeholder
+         return redirect()->route('safety_courses.index')->with('success', 'Corso di Sicurezza aggiornato con successo.');
     }
 
     /**

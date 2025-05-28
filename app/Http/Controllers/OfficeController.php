@@ -16,11 +16,11 @@ class OfficeController extends Controller
     {
         // Recupera tutti gli uffici, magari con paginazione
         // Esempio: $offices = Office::latest()->paginate(10);
-        $offices = Office::orderBy('nome')->get(); // Recupera tutti ordinati per nome
+        $offices = Office::withCount('sections')->orderBy('nome')->get(); // Recupera tutti ordinati per nome
 
         // Passa i dati alla vista
         // return view('offices.index', compact('offices'));
-        return response()->json($offices); // Per ora restituisco JSON, dovrai creare la vista
+        return view('offices.index', compact('offices'));
     }
 
     /**
@@ -31,8 +31,8 @@ class OfficeController extends Controller
     public function create()
     {
         // Mostra il form per creare un nuovo ufficio
-        // return view('offices.create');
-        return "OfficeController@create - Form Creazione Ufficio (da implementare con una vista Blade)";
+        return view('offices.create');
+        //return "OfficeController@create - Form Creazione Ufficio (da implementare con una vista Blade)";
     }
 
     /**
@@ -66,10 +66,11 @@ class OfficeController extends Controller
      */
     public function show(Office $office)
     {
+        $office->load('sections');
         // Mostra i dettagli di un ufficio specifico
         // Potresti voler caricare relazioni, es: $office->load('sections');
         // return view('offices.show', compact('office'));
-        return response()->json($office); // Per ora JSON
+        return view('offices.show', compact('office'));
     }
 
     /**
@@ -81,8 +82,8 @@ class OfficeController extends Controller
     public function edit(Office $office)
     {
         // Mostra il form per modificare un ufficio esistente
-        // return view('offices.edit', compact('office'));
-        return "OfficeController@edit - Form Modifica Ufficio ID: {$office->id} (da implementare con una vista Blade)";
+         return view('offices.edit', compact('office'));
+       // return "OfficeController@edit - Form Modifica Ufficio ID: {$office->id} (da implementare con una vista Blade)";
     }
 
     /**

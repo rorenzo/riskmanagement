@@ -34,7 +34,7 @@ class Section extends Model
     // Un approccio semplificato potrebbe essere:
     return $this->belongsToMany(Profile::class, 'profile_section')
                 ->wherePivotNull('data_fine_assegnazione') // Assegnazione attiva a questa sezione
-                ->whereHas('employmentPeriod', function ($query) { // E l'anagrafica è attualmente impiegata
+                ->whereHas('employmentPeriods', function ($query) { // E l'anagrafica è attualmente impiegata
                     $query->whereNull('data_fine_periodo');
                 });
 }

@@ -1,6 +1,13 @@
 <?php
 
 use App\Http\Controllers\AnagraficaController;
+use App\Http\Controllers\OfficeController;
+use App\Http\Controllers\SectionController;
+use App\Http\Controllers\SafetyCourseController;
+use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\PPEController;
+
+
 use Illuminate\Support\Facades\Route;
 
 Route::get('/dashboard', function () {
@@ -27,3 +34,9 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{profile}', [AnagraficaController::class, 'destroy'])->name('destroy');
     });
 });
+
+Route::middleware(['auth'])->resource('offices', OfficeController::class);
+Route::middleware(['auth'])->resource('sections', SectionController::class);
+Route::middleware(['auth'])->resource('ppes', PPEController::class);
+Route::middleware(['auth'])->resource('safety_courses', SafetyCourseController::class);
+Route::middleware(['auth'])->resource('activities', ActivityController::class);

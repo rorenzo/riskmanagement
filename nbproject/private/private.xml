@@ -1,4 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file://192.168.56.101/allusers/riskmanagement/routes/portal.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/app/Http/Controllers/ActivityController.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/activities/index.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/layouts/navigation.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/app/Models/Activity.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/activities/create.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/activities/edit.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/activities/show.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/offices/index.blade.php</file>
+        </group>
+    </open-files>
 </project-private>

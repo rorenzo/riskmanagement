@@ -4,28 +4,30 @@ namespace App\Http\Controllers;
 
 use App\Models\Section;
 use Illuminate\Http\Request; // O la form request specifica se la crei
+use App\Models\Office;
 
 class SectionController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
-        // Esempio: $sections = Section::with('office')->latest()->paginate(10);
-        // return view('sections.index', compact('sections'));
-        return "SectionController@index - Elenco Sezioni (da implementare)";
-    }
+   public function index()
+{
+    $sections = Section::with('office')->orderBy('nome')->get(); // Esempio per client-side DataTables
+    return view('sections.index', compact('sections'));
+}
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
-    {
-        // Esempio: $offices = \App\Models\Office::orderBy('nome')->pluck('nome', 'id');
-        // return view('sections.create', compact('offices'));
-        return "SectionController@create - Form Creazione Sezione (da implementare)";
-    }
+   // In SectionController.php
+
+
+public function create()
+{
+    $offices = Office::orderBy('nome')->get();
+    return view('sections.create', compact('offices'));
+}
 
     /**
      * Store a newly created resource in storage.  
@@ -46,22 +48,21 @@ class SectionController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Section $section) 
-    {
-        // Esempio: $section->load('office');
-        // return view('sections.show', compact('section'));
-        return "SectionController@show - Dettaglio Sezione ID: {$section->id} (da implementare)";
-    }
+    public function show(Section $section)
+{
+    $section->load(['office', 'currentProfiles.employmentPeriods']); // 'currentAnagrafiche' è la relazione che hai definito in Section
+    return view('sections.show', compact('section'));
+}
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Section $section)
-    {
-        // Esempio: $offices = \App\Models\Office::orderBy('nome')->pluck('nome', 'id');
-        // return view('sections.edit', compact('section', 'offices'));
-        return "SectionController@edit - Form Modifica Sezione ID: {$section->id} (da implementare)";
-    }
+    // In SectionController.php
+public function edit(Section $section)
+{
+    $offices = Office::orderBy('nome')->get();
+    return view('sections.edit', compact('section', 'offices'));
+}
 
     /**
      * Update the specified resource in storage.

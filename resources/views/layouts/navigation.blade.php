@@ -26,13 +26,34 @@
                     </a>
                 </li>
                 {{-- Aggiungi qui altri link di navigazione principali --}}
-                {{-- Esempio:
+                
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('offices.*') ? 'active' : '' }}" href="{{ route('offices.index') }}">
                         {{ __('Uffici') }}
                     </a>
                 </li>
-                --}}
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('sections.*') ? 'active' : '' }}" href="{{ route('sections.index') }}">
+                        {{ __('Sezioni') }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('ppes.*') ? 'active' : '' }}" href="{{ route('ppes.index') }}">
+                        {{ __('DPI') }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('safety_courses.*') ? 'active' : '' }}" href="{{ route('safety_courses.index') }}">
+                        {{ __('Corsi') }}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('activities.*') ? 'active' : '' }}" href="{{ route('activities.index') }}">
+                        {{ __('Attività') }}
+                    </a>
+                </li>
+                
+                
             </ul>
 
             @auth {{-- Assicurati che l'utente sia autenticato per mostrare questo --}}

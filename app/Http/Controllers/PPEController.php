@@ -12,20 +12,18 @@ class PPEController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-    {
-        // $ppes = PPE::latest()->paginate(10);
-        // return view('ppes.index', compact('ppes'));
-        $ppes = PPE::orderBy('name')->get();
-        return response()->json($ppes); // Placeholder
-    }
+{
+    // Per DataTables client-side
+    $ppes = PPE::withCount('activities')->orderBy('name')->get();
+    return view('ppes.index', compact('ppes'));
+}
 
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-        // return view('ppes.create');
-        return "PPEController@create - Form Creazione DPI (da implementare)";
+         return view('ppes.create');
     }
 
     /**
@@ -40,8 +38,7 @@ class PPEController extends Controller
 
         $ppe = PPE::create($validatedData);
 
-        // return redirect()->route('ppes.index')->with('success', 'DPI creato con successo.');
-        return response()->json(['message' => 'DPI creato', 'data' => $ppe], 201); // Placeholder
+         return redirect()->route('ppes.index')->with('success', 'DPI creato con successo.');
     }
 
     /**
@@ -49,9 +46,8 @@ class PPEController extends Controller
      */
     public function show(PPE $ppe)
     {
-        // $ppe->load('activities'); // Per vedere le attività associate
-        // return view('ppes.show', compact('ppe'));
-        return response()->json($ppe->load('activities')); // Placeholder
+         $ppe->load('activities'); // Per vedere le attività associate
+         return view('ppes.show', compact('ppe'));
     }
 
     /**
@@ -59,8 +55,7 @@ class PPEController extends Controller
      */
     public function edit(PPE $ppe)
     {
-        // return view('ppes.edit', compact('ppe'));
-        return "PPEController@edit - Form Modifica DPI ID: {$ppe->id} (da implementare)";
+         return view('ppes.edit', compact('ppe'));
     }
 
     /**
