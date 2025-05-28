@@ -1,0 +1,8 @@
+/* Import Bootstrap CSS */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+/* Eventuali stili personalizzati aggiuntivi qui */
+@import 'jquery-ui-dist/jquery-ui.min.css';
+
+@import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
+
