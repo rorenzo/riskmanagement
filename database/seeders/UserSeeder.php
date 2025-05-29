@@ -30,6 +30,22 @@ class UserSeeder extends Seeder
             $this->command->info('Utente Amministratore già esistente con ruolo corretto.');
         }
 
+        
+         $admin = User::firstOrCreate(
+            ['email' => 'rspp@gmail.com'], // Chiave per firstOrCreate
+            [                             // Valori da creare se non esiste
+                'name' => 'Admin2',
+                'password' => Hash::make('password'), // Cambia questa password!
+                'email_verified_at' => now(),
+            ]
+        );
+        if ($admin->wasRecentlyCreated || !$admin->hasRole('amministratore')) {
+            $admin->assignRole('amministratore');
+            $this->command->info('Utente Amministratore creato/aggiornato e ruolo assegnato.');
+        } else {
+            $this->command->info('Utente Amministratore già esistente con ruolo corretto.');
+        }
+        
 
         // Crea Utente Standard   
         $user = User::firstOrCreate(
