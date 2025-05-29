@@ -76,8 +76,8 @@ public function edit(Section $section)
         //     'office_id' => 'required|exists:offices,id',
         // ]);
         // $section->update($validatedData);
-        // return redirect()->route('sections.index')->with('success', 'Sezione aggiornata con successo.');
-        return "SectionController@update - Aggiornamento Sezione ID: {$section->id} (da implementare)";
+         return redirect()->route('sections.index')->with('success', 'Sezione aggiornata con successo.');
+//        return "SectionController@update - Aggiornamento Sezione ID: {$section->id} (da implementare)";
     }
 
     /**
@@ -87,8 +87,8 @@ public function edit(Section $section)
     {
         // Esempio:
         // $section->delete(); // Soft delete
-        // return redirect()->route('sections.index')->with('success', 'Sezione eliminata con successo.');
-        return "SectionController@destroy - Eliminazione Sezione ID: {$section->id} (da implementare)";
+         return redirect()->route('sections.index')->with('success', 'Sezione eliminata con successo.');
+//        return "SectionController@destroy - Eliminazione Sezione ID: {$section->id} (da implementare)";
     }
 }
  

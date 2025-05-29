@@ -54,8 +54,8 @@ class OfficeController extends Controller
         Office::create($validatedData);
 
         // Reindirizza con un messaggio di successo
-        // return redirect()->route('offices.index')->with('success', 'Ufficio creato con successo!');
-        return response()->json(['message' => 'Ufficio creato con successo!', 'data' => $validatedData], 201); // Per ora JSON
+         return redirect()->route('offices.index')->with('success', 'Ufficio creato con successo!');
+//        return response()->json(['message' => 'Ufficio creato con successo!', 'data' => $validatedData], 201); // Per ora JSON
     }
 
     /**
@@ -106,8 +106,8 @@ class OfficeController extends Controller
         $office->update($validatedData);
 
         // Reindirizza con un messaggio di successo
-        // return redirect()->route('offices.index')->with('success', 'Ufficio aggiornato con successo!');
-        return response()->json(['message' => 'Ufficio aggiornato con successo!', 'data' => $office]); // Per ora JSON
+         return redirect()->route('offices.index')->with('success', 'Ufficio aggiornato con successo!');
+//        return response()->json(['message' => 'Ufficio aggiornato con successo!', 'data' => $office]); // Per ora JSON
     }
 
     /**
@@ -125,8 +125,8 @@ class OfficeController extends Controller
             return response()->json(['message' => 'Ufficio eliminato con successo!']); // Per ora JSON
         } catch (\Exception $e) {
             // Gestisci eventuali errori, ad esempio se ci sono vincoli di chiave esterna che impediscono l'eliminazione
-            // return redirect()->route('offices.index')->with('error', 'Impossibile eliminare l\'ufficio: ' . $e->getMessage());
-            return response()->json(['message' => 'Errore durante l\'eliminazione dell\'ufficio: ' . $e->getMessage()], 500); // Per ora JSON
+             return redirect()->route('offices.index')->with('error', 'Impossibile eliminare l\'ufficio: ' . $e->getMessage());
+//            return response()->json(['message' => 'Errore durante l\'eliminazione dell\'ufficio: ' . $e->getMessage()], 500); // Per ora JSON
         }
     }
 }

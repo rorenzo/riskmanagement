@@ -62,8 +62,8 @@ class HealthCheckRecordController extends Controller
 
         $healthSurveillanceType = HealthSurveillance::find($validatedData['health_surveillance_id']);
         if (!$healthSurveillanceType || is_null($healthSurveillanceType->duration_years)) {
-            // return back()->withInput()->with('error', 'Tipo di sorveglianza non valido o durata non specificata.');
-            return response()->json(['message' => 'Tipo di sorveglianza non valido o durata non specificata.'], 422);
+             return back()->withInput()->with('error', 'Tipo di sorveglianza non valido o durata non specificata.');
+//            return response()->json(['message' => 'Tipo di sorveglianza non valido o durata non specificata.'], 422);
         }
 
         $validatedData['expiration_date'] = Carbon::parse($validatedData['check_up_date'])
@@ -71,8 +71,8 @@ class HealthCheckRecordController extends Controller
 
         $record = HealthCheckRecord::create($validatedData);
 
-        // return redirect()->route('profiles.show', $validatedData['profile_id'])->with('success', 'Controllo sanitario registrato con successo.');
-        return response()->json(['message' => 'Controllo sanitario registrato', 'data' => $record], 201);
+         return redirect()->route('profiles.show', $validatedData['profile_id'])->with('success', 'Controllo sanitario registrato con successo.');
+//        return response()->json(['message' => 'Controllo sanitario registrato', 'data' => $record], 201);
     }
 
     /**
@@ -81,8 +81,8 @@ class HealthCheckRecordController extends Controller
     public function show(HealthCheckRecord $healthCheckRecord)
     {
         // $healthCheckRecord->load(['profile', 'healthSurveillance', 'activity']);
-        // return view('health_check_records.show', compact('healthCheckRecord'));
-        return response()->json($healthCheckRecord->load(['profile', 'healthSurveillance', 'activity']));
+         return view('health_check_records.show', compact('healthCheckRecord'));
+//        return response()->json($healthCheckRecord->load(['profile', 'healthSurveillance', 'activity']));
     }
 
     /**

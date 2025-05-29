@@ -70,8 +70,8 @@ class PPEController extends Controller
 
         $ppe->update($validatedData);
 
-        // return redirect()->route('ppes.index')->with('success', 'DPI aggiornato con successo.');
-        return response()->json(['message' => 'DPI aggiornato', 'data' => $ppe]); // Placeholder
+         return redirect()->route('ppes.index')->with('success', 'DPI aggiornato con successo.');
+//        return response()->json(['message' => 'DPI aggiornato', 'data' => $ppe]); // Placeholder
     }
 
     /**
@@ -84,8 +84,8 @@ class PPEController extends Controller
 
         $ppe->delete(); // Soft delete
 
-        // return redirect()->route('ppes.index')->with('success', 'DPI eliminato con successo.');
-        return response()->json(['message' => 'DPI eliminato']); // Placeholder
+         return redirect()->route('ppes.index')->with('success', 'DPI eliminato con successo.');
+//        return response()->json(['message' => 'DPI eliminato']); // Placeholder
     }
 
     // --- Metodi per associare/dissociare DPI alle attività ---

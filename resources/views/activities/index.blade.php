@@ -39,7 +39,7 @@
                                     <th class="text-center">{{ __('N. Profili Associati') }}</th>
                                     <th class="text-center">{{ __('N. DPI Associati') }}</th>
                                     <th class="text-center">{{ __('N. Sorv. Sanitarie Associate') }}</th>
-                                    <th class="text-center">{{ __('Azioni') }}</th>
+                                    <th class="text-center actions-column">{{ __('Azioni') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -81,6 +81,11 @@
         <style>
             #activitiesTable td, #activitiesTable th {
                 vertical-align: middle;
+            }
+            
+            .actions-column {
+                width: 140px; /* Imposta una larghezza fissa per la colonna */
+                white-space: nowrap; /* Impedisce ai bottoni di andare a capo */
             }
         </style>
     @endpush

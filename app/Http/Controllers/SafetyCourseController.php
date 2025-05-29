@@ -89,8 +89,8 @@ class SafetyCourseController extends Controller
         // o semplicemente $safetyCourse->profiles()->detach();
         $safetyCourse->delete(); // Soft delete
 
-        // return redirect()->route('safety_courses.index')->with('success', 'Corso di Sicurezza eliminato con successo.');
-        return response()->json(['message' => 'Corso di Sicurezza eliminato']); // Placeholder
+         return redirect()->route('safety_courses.index')->with('success', 'Corso di Sicurezza eliminato con successo.');
+//        return response()->json(['message' => 'Corso di Sicurezza eliminato']); // Placeholder
     }
 
 

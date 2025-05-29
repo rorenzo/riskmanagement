@@ -84,8 +84,7 @@ class ActivityController extends Controller
 
         $activity->delete(); // Soft delete
 
-        // return redirect()->route('activities.index')->with('success', 'Attività eliminata con successo.');
-        return response()->json(['message' => 'Attività eliminata']); // Placeholder
+         return redirect()->route('activities.index')->with('success', 'Attività eliminata con successo.');
     }
 
     // --- Metodi per associare/dissociare attività ai profili ---
