@@ -8,7 +8,7 @@
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-
+@vite(['resources/css/app.css'])
         {{-- Vite gestirà il caricamento di app.css (che include Bootstrap) e app.js (che include Bootstrap JS) --}}
        
         @stack('styles') {{-- Qui verranno caricati gli stili specifici della pagina --}}
@@ -84,7 +84,7 @@
             </div>
         </footer>
         --}}
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @vite(['resources/js/app.js'])
         @stack('scripts') {{-- Qui verranno caricati gli script specifici della pagina --}}
         
     </body>

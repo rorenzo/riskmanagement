@@ -339,7 +339,7 @@ class AnagraficaController extends Controller
 
             $profile->delete(); // Soft delete del profilo
             DB::commit();
-            return redirect()->route('profiles.index')->with('success', 'Profilo eliminato (soft delete) con successo.');
+            return redirect()->route('profiles.index')->with('success', 'Profilo eliminato con successo.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->route('profiles.index')->with('error', 'Errore durante l\'eliminazione del profilo: ' . $e->getMessage());

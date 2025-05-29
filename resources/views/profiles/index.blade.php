@@ -1,9 +1,18 @@
 {{-- resources/views/profiles/index.blade.php --}}
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="h4 fw-semibold text-dark">
-            {{ __('Elenco Profili Anagrafici') }}
-        </h2>
+        
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="h4 fw-semibold text-dark">
+                {{ __('Elenco Profili Anagrafici') }}
+            </h2>
+            <div>
+                <a href="{{ route('profiles.create') }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-plus me-1"></i> {{ __('Aggiungi Anagrafica') }}
+                </a>
+            </div>
+        </div>
+        
     </x-slot>
 
     <div class="py-5">
@@ -24,13 +33,15 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     @if (session('success'))
-                        <div class="alert alert-success" role="alert">
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
                             {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     @endif
                     @if (session('error'))
-                        <div class="alert alert-danger" role="alert">
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
                             {{ session('error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     @endif
 
@@ -70,14 +81,13 @@
             if (window.$ && typeof window.$.fn.DataTable === 'function') {
                 window.$(document).ready(function() {
                     var table = window.$('#profilesTable').DataTable({
-                        processing: true, // Mostra indicatore di caricamento
-                        serverSide: true, // Abilita elaborazione lato server
+                        processing: true, 
+                        serverSide: true, 
                         ajax: {
-                            url: "{{ route('profiles.data') }}", // Nuova rotta per i dati AJAX
-                            type: "GET", // o POST se preferisci
-                            data: function (d) { // Invia dati aggiuntivi (filtri)
+                            url: "{{ route('profiles.data') }}", 
+                            type: "GET", 
+                            data: function (d) { 
                                 d.section_filter = window.$('#section-filter').val();
-                                // Aggiungi altri filtri qui se necessario
                             }
                         },
                         columns: [
@@ -87,32 +97,48 @@
                             { data: 'current_section_name', name: 'current_section_name', orderable: true, searchable: true, defaultContent: 'N/D' },
                             { data: 'current_office_name', name: 'current_office_name', orderable: true, searchable: true, defaultContent: 'N/D' },
                             {
-                                data: 'id', // Useremo l'ID per generare il link
+                                data: 'id', 
                                 name: 'azioni',
                                 orderable: false,
                                 searchable: false,
                                 className: 'text-center',
                                 render: function (data, type, row) {
-                                    var showUrl = "{{ route('profiles.show', ':id') }}";
-                                    showUrl = showUrl.replace(':id', data);
+                                    var showUrl = "{{ route('profiles.show', ':id') }}".replace(':id', data);
+                                    var editUrl = "{{ route('profiles.edit', ':id') }}".replace(':id', data);
+                                    var destroyUrl = "{{ route('profiles.destroy', ':id') }}".replace(':id', data); // CORRETTO QUI
+                                    
+                                    var csrfToken = '@csrf'; // Non funziona direttamente così in stringa JS
+                                    var methodField = '@method("DELETE")'; // Non funziona direttamente così
+                                    
+                                    // È meglio costruire il form con i token Laravel direttamente o usare un approccio diverso per il delete
+                                    // Per semplicità e per mantenere la conferma, useremo un onsubmit nel form.
+                                    // Il token CSRF e il metodo DELETE devono essere gestiti correttamente nel form che viene sottomesso.
+                                    // La stringa qui sotto costruisce l'HTML per il form.
+                                    var formHtml = '<form action="' + destroyUrl +'" method="POST" class="d-inline ms-1" onsubmit="return confirm(\'{{ __('Sei sicuro di voler eliminare questo profilo?') }}\');">' +
+                                                   '{{ csrf_field() }}' + // Inserisce il token CSRF
+                                                   '{{ method_field("DELETE") }}' + // Specifica il metodo DELETE
+                                                   '<button type="submit" class="btn btn-sm btn-danger" title="{{ __('Elimina') }}">' +
+                                                   '<i class="fas fa-trash"></i>' +
+                                                   '</button></form>';
+
                                     return '<a href="' + showUrl + '" class="btn btn-sm btn-info" title="{{ __('Visualizza Scheda') }}">' +
-                                           '<i class="fas fa-eye"></i>' +
-                                           '</a>';
-                                    // Aggiungi qui altri bottoni azione se necessario
+                                           '<i class="fas fa-eye"></i></a>' +
+                                           '<a href="'+editUrl+'" class="btn btn-sm btn-primary ms-1" title="{{ __('Modifica') }}">'+
+                                           '<i class="fas fa-edit"></i></a>' +
+                                           formHtml;
                                 }
                             }
                         ],
                         language: {
-                            url: "{{ asset('js/it-IT.json') }}", // Assicurati che questo file esista in public/js
+                            url: "{{ asset('js/it-IT.json') }}", 
                         },
-                        searching: true, // Abilita la ricerca globale di DataTables
-                        ordering: true,  // Abilita l'ordinamento per colonna
-                        order: [[2, 'asc'], [1, 'asc']], // Esempio: ordina per cognome (colonna 2), poi nome (colonna 1)
+                        searching: true, 
+                        ordering: true,  
+                        order: [[2, 'asc'], [1, 'asc']], 
                     });
 
-                    // Ricarica la tabella quando il filtro per Sezione cambia
                     window.$('#section-filter').on('change', function(){
-                        table.ajax.reload(); // Ricarica i dati dal server
+                        table.ajax.reload(); 
                     });
                 });
             } else {
