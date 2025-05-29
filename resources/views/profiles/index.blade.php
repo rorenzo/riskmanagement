@@ -21,10 +21,15 @@
             <div class="mb-3 row align-items-center">
                 <label for="section-filter" class="col-sm-auto col-form-label">{{ __('Filtra per Sezione:') }}</label>
                 <div class="col-sm-4">
-                    <select id="section-filter" class="form-select form-select-sm">
+                   <select id="section-filter" class="form-select form-select-sm" aria-label="{{ __('Filtro per sezione') }}">
                         <option value="">{{ __('Tutte le Sezioni') }}</option>
-                        @foreach ($sectionsForFilter as $sectionName) {{-- $sectionsForFilter deve essere passato dal controller --}}
-                            <option value="{{ $sectionName }}">{{ $sectionName }}</option>
+                        {{-- 
+                            Il controller ora passa una collection chiave-valore.
+                            $sectionName è il valore che verrà inviato dal filtro (es: "Sezione Innovazione").
+                            $displayText è il testo che l'utente visualizza (es: "Sezione Innovazione (Ufficio Tecnico)").
+                        --}}
+                        @foreach ($sectionsForFilter as $sectionName => $displayText)
+                            <option value="{{ $sectionName }}">{{ $displayText }}</option>
                         @endforeach
                     </select>
                 </div>

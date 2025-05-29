@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule; // Per regole di validazione più complesse
+use Illuminate\Support\Facades\{Log, Schema}; // Assicurati che Log sia importato
+
 
 class AnagraficaController extends Controller
 {
@@ -17,83 +19,139 @@ class AnagraficaController extends Controller
      */
     public function index()
     {
-        $sectionsForFilter = Section::orderBy('nome')->pluck('nome')->unique();
-        return view('profiles.index', compact('sectionsForFilter'));
+    $allSections = Section::with('office')->orderBy('nome')->get();
+
+    $sectionsForFilter = $allSections->mapWithKeys(function ($section) {
+        $displayText = $section->nome;
+        
+        if ($section->office && $section->office->nome) {
+            $displayText .= " ({$section->office->nome})";
+        }
+
+        return [$section->nome => $displayText];
+    });
+
+    return view('profiles.index', compact('sectionsForFilter'));
+
     }
 
     /**
      * Fornisce i dati per DataTables server-side.
      */
-    public function data(Request $request)
-    {
-        $query = Profile::query();
+ 
+public function data(Request $request)
+{
+//    Log::info('--- Inizio AnagraficaController@data ---');
+//    Log::debug('Request DataTables:', $request->all());
 
+    try {
+        $totalData = Profile::query()->count();
+
+        // 1. Ottenere dinamicamente i nomi delle colonne dalla tabella 'profiles'
+        $profileColumns = Schema::getColumnListing('profiles');
+        $qualifiedProfileColumns = array_map(fn($c) => "profiles.$c", $profileColumns);
+
+        $query = Profile::query()
+            // 2. Selezionare esplicitamente tutte le colonne di profiles + gli alias
+            ->select(array_merge($qualifiedProfileColumns, [
+                'sections.nome as current_section_name',
+                'offices.nome as current_office_name'
+            ]))
+            ->leftJoin('profile_section', function ($join) {
+                $join->on('profiles.id', '=', 'profile_section.profile_id')
+                     ->whereNull('profile_section.data_fine_assegnazione');
+            })
+            ->leftJoin('sections', 'profile_section.section_id', '=', 'sections.id')
+            ->leftJoin('offices', 'sections.office_id', '=', 'offices.id');
+
+        // (Il resto della logica di filtro e ricerca rimane invariato)
         if ($request->filled('section_filter') && $request->section_filter !== "") {
-            $sectionName = $request->section_filter;
-            $query->whereHas('sectionHistory', function ($q) use ($sectionName) {
-                $q->where('sections.nome', $sectionName)->wherePivotNull('data_fine_assegnazione');
-            })->whereHas('employmentPeriods', function ($q) {
-                $q->whereNull('data_fine_periodo');
-            });
+            $query->where('sections.nome', $request->section_filter);
         }
-
-        $totalData = $query->count(); // Conteggio prima della ricerca/filtri specifici di DataTables
-
+        $query->whereHas('employmentPeriods', function ($q) {
+            $q->whereNull('data_fine_periodo');
+        });
         if ($request->filled('search.value')) {
             $searchValue = $request->input('search.value');
             $query->where(function ($q) use ($searchValue) {
-                $q->where('nome', 'LIKE', "%{$searchValue}%")
-                  ->orWhere('cognome', 'LIKE', "%{$searchValue}%")
-                  ->orWhere('grado', 'LIKE', "%{$searchValue}%")
-                  ->orWhere('email', 'LIKE', "%{$searchValue}%")
-                  ->orWhere('cf', 'LIKE', "%{$searchValue}%");
+                $q->where('profiles.nome', 'LIKE', "%{$searchValue}%")
+                  ->orWhere('profiles.cognome', 'LIKE', "%{$searchValue}%")
+                  ->orWhere('profiles.grado', 'LIKE', "%{$searchValue}%")
+                  ->orWhere('profiles.email', 'LIKE', "%{$searchValue}%")
+                  ->orWhere('profiles.cf', 'LIKE', "%{$searchValue}%")
+                  ->orWhere('sections.nome', 'LIKE', "%{$searchValue}%")
+                  ->orWhere('offices.nome', 'LIKE', "%{$searchValue}%");
             });
         }
 
-        $totalFiltered = $query->count(); // Conteggio dopo la ricerca globale
+        // 3. Raggruppare per tutte le colonne selezionate per essere compatibili con ONLY_FULL_GROUP_BY
+        $columnsToGroupBy = array_merge($qualifiedProfileColumns, ['sections.nome', 'offices.nome']);
+        $query->groupBy($columnsToGroupBy);
+        
+        // Il conteggio con subquery ora funziona perché la query interna è valida
+        $totalFiltered = DB::query()->fromSub($query, 'sub')->count();
 
-        if ($request->has('order')) {
+        // (La logica di ordinamento e paginazione rimane invariata)
+        if ($request->has('order') && is_array($request->input('order')) && count($request->input('order')) > 0) {
             $orderColumnIndex = $request->input('order.0.column');
             $orderDirection = $request->input('order.0.dir');
             $columns = $request->input('columns');
-            $columnToSort = $columns[$orderColumnIndex]['data'];
-
-            $allowedSortColumns = ['grado', 'nome', 'cognome'];
-            if (in_array($columnToSort, $allowedSortColumns)) {
-                $query->orderBy($columnToSort, $orderDirection);
-            } else {
-                $query->orderBy('cognome', 'asc')->orderBy('nome', 'asc');
+            if (isset($columns[$orderColumnIndex]['data'])) {
+                $columnToSort = $columns[$orderColumnIndex]['data'];
+                $sortMapping = [
+                    'grado'                 => 'profiles.grado',
+                    'nome'                  => 'profiles.nome',
+                    'cognome'               => 'profiles.cognome',
+                    'current_section_name'  => 'sections.nome',
+                    'current_office_name'   => 'offices.nome'
+                ];
+                if (array_key_exists($columnToSort, $sortMapping)) {
+                    $query->orderBy($sortMapping[$columnToSort], $orderDirection);
+                } else {
+                    $query->orderBy('profiles.cognome', 'asc')->orderBy('profiles.nome', 'asc');
+                }
             }
         } else {
-            $query->orderBy('cognome', 'asc')->orderBy('nome', 'asc');
+            $query->orderBy('profiles.cognome', 'asc')->orderBy('profiles.nome', 'asc');
         }
 
         if ($request->has('length') && $request->input('length') != -1) {
             $query->skip($request->input('start'))->take($request->input('length'));
         }
-
+        
         $profiles = $query->get();
-
+        
         $data = $profiles->map(function ($profile) {
-            $currentSectionAssignment = $profile->getCurrentSectionAssignment(); // Metodo helper nel modello Profile
             return [
                 'id' => $profile->id,
                 'grado' => $profile->grado ?? 'N/D',
                 'nome' => $profile->nome,
                 'cognome' => $profile->cognome,
-                'current_section_name' => $currentSectionAssignment ? $currentSectionAssignment->nome : 'N/D',
-                'current_office_name' => $currentSectionAssignment && $currentSectionAssignment->office ? $currentSectionAssignment->office->nome : 'N/D',
+                'current_section_name' => $profile->current_section_name ?? 'N/D',
+                'current_office_name' => $profile->current_office_name ?? 'N/D',
             ];
         });
 
-        return response()->json([
+        $response = [
             "draw"            => intval($request->input('draw')),
             "recordsTotal"    => intval($totalData),
             "recordsFiltered" => intval($totalFiltered),
             "data"            => $data
-        ]);
-    }
+        ];
 
+        return response()->json($response);
+
+    } catch (\Exception $e) {
+//        Log::error("--- ERRORE in AnagraficaController@data ---");
+//        Log::error('Messaggio Errore: ' . $e->getMessage());
+//        Log::error('File Errore: ' . $e->getFile() . ' Riga: ' . $e->getLine());
+//        Log::error('Stack Trace: ' . substr($e->getTraceAsString(), 0, 2000));
+        return response()->json([
+            'error' => 'Si è verificato un errore sul server.',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
     /**
      * Show the form for creating a new resource.
      */

@@ -52,6 +52,11 @@
                         {{ __('Attività') }}
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('health_surveillances.*') ? 'active' : '' }}" href="{{ route('health_surveillances.index') }}">
+                        {{ __('Sorveglianza Sanitaria') }}
+                    </a>
+                </li>
                 
                 
             </ul>

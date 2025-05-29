@@ -34,7 +34,6 @@
                         <table id="sectionsTable" class="table table-striped table-hover" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th>{{ __('ID') }}</th>
                                     <th>{{ __('Nome Sezione') }}</th>
                                     <th>{{ __('Ufficio di Appartenenza') }}</th>
                                     <th>{{ __('Descrizione') }}</th>
@@ -45,7 +44,6 @@
                             <tbody>
                                 @foreach ($sections as $section)
                                     <tr>
-                                        <td>{{ $section->id }}</td>
                                         <td>{{ $section->nome }}</td>
                                         <td>{{ $section->office->nome ?? 'N/D' }}</td>
                                         <td>{{ Str::limit($section->descrizione, 70) }}</td>
@@ -94,9 +92,8 @@
                         },
                         order: [[1, 'asc']], // Ordina per nome sezione
                         columnDefs: [
-                            { targets: [0], width: '5%' }, // ID
-                            { targets: [4], className: 'text-center' }, // N. Profili
-                            { targets: [5], orderable: false, searchable: false, className: 'text-center' } // Azioni
+                            { targets: [3], className: 'text-center' }, // N. Profili
+                            { targets: [4], orderable: false, searchable: false, className: 'text-center' } // Azioni
                         ]
                     });
                 });

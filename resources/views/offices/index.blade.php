@@ -34,7 +34,6 @@
                         <table id="officesTable" class="table table-striped table-hover" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th>{{ __('ID') }}</th>
                                     <th>{{ __('Nome Ufficio') }}</th>
                                     <th>{{ __('Descrizione') }}</th>
                                     <th class="text-center">{{ __('N. Sezioni') }}</th>
@@ -49,7 +48,6 @@
                                 --}}
                                 @foreach ($offices as $office)
                                     <tr>
-                                        <td>{{ $office->id }}</td>
                                         <td>{{ $office->nome }}</td>
                                         <td>{{ Str::limit($office->descrizione, 70) }}</td>
                                         <td class="text-center">{{ $office->sections_count ?? $office->sections->count() }}</td>
@@ -100,9 +98,8 @@
                         },
                         order: [[1, 'asc']], // Ordina per nome ufficio di default
                         columnDefs: [
-                            { targets: [0], width: '5%' }, // ID
-                            { targets: [3], className: 'text-center' }, // N. Sezioni
-                            { targets: [4], orderable: false, searchable: false, className: 'text-center' } // Azioni
+                            { targets: [2], className: 'text-center' }, // N. Sezioni
+                            { targets: [3], orderable: false, searchable: false, className: 'text-center' } // Azioni
                         ]
                     });
                 });
