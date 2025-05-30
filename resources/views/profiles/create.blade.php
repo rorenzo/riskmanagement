@@ -66,9 +66,34 @@
                                 @enderror
                             </div>
                         </div>
+                        
+                        {{-- Incarico e Mansione --}}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="incarico" class="form-label">{{ __('Incarico') }}</label>
+                                <select class="form-select @error('incarico') is-invalid @enderror" id="incarico" name="incarico">
+                                    <option value="">{{ __('Seleziona un incarico...') }}</option>
+                                    @foreach ($incarichiDisponibili as $key => $value)
+                                        <option value="{{ $key }}" {{ old('incarico') == $key ? 'selected' : '' }}>{{ $value }}</option>
+                                    @endforeach
+                                </select>
+                                @error('incarico')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="mansione" class="form-label">{{ __('Mansione') }}</label>
+                                <input type="text" class="form-control @error('mansione') is-invalid @enderror" id="mansione" name="mansione" value="{{ old('mansione') }}">
+                                @error('mansione')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
 
                         <hr class="my-4">
                         <h5 class="card-title mb-3">{{ __('Luogo di Nascita') }}</h5>
+                        {{-- ... (campi luogo di nascita invariati) ... --}}
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="luogo_nascita_citta" class="form-label">{{ __('Città') }}</label>
@@ -100,9 +125,11 @@
                             </div>
                         </div>
 
+
                         <hr class="my-4">
                         <h5 class="card-title mb-3">{{ __('Luogo di Residenza') }}</h5>
-                        <div class="row">
+                        {{-- ... (campi residenza invariati) ... --}}
+                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="residenza_via" class="form-label">{{ __('Via/Piazza') }}</label>
                                 <input type="text" class="form-control @error('residenza_via') is-invalid @enderror" id="residenza_via" name="residenza_via" value="{{ old('residenza_via') }}">
@@ -144,6 +171,7 @@
 
                         <hr class="my-4">
                         <h5 class="card-title mb-3">{{ __('Contatti') }}</h5>
+                        {{-- ... (campi contatti invariati) ... --}}
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="email" class="form-label">{{ __('Email') }}</label>
@@ -163,7 +191,8 @@
 
                         <hr class="my-4">
                         <h5 class="card-title mb-3">{{ __('Assegnazione Iniziale (se impiegato)') }}</h5>
-                         <div class="alert alert-info" role="alert">
+                        {{-- ... (campi assegnazione iniziale invariati) ... --}}
+                        <div class="alert alert-info" role="alert">
                             {{__('L\'assegnazione alla sezione e il periodo di impiego verranno gestiti in una sezione dedicata o automaticamente al primo impiego.')}}
                             {{__('Per ora, questi campi servono per l\'impostazione iniziale se il profilo viene creato come già impiegato e assegnato.')}}
                         </div>
@@ -190,13 +219,34 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                             <div class="col-md-12 mb-3">
+                            <div class="col-md-12 mb-3">
                                 <label for="note_assegnazione" class="form-label">{{ __('Note Assegnazione Iniziale') }}</label>
                                 <textarea class="form-control @error('note_assegnazione') is-invalid @enderror" id="note_assegnazione" name="note_assegnazione" rows="3">{{ old('note_assegnazione', 'Assegnazione iniziale.') }}</textarea>
                                 @error('note_assegnazione')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+                        </div>
+
+                        <hr class="my-4">
+                        <h5 class="card-title mb-3">{{ __('Attività Assegnate') }}</h5>
+                        <div class="row activity-btn-group">
+                             @if($activities->count() > 0)
+                                @foreach ($activities as $activity)
+                                    <div class="col-md-4 mb-2"> {{-- O col-auto per adattarsi al contenuto --}}
+                                        <input class="form-check-input" type="checkbox" name="activity_ids[]" value="{{ $activity->id }}" id="activity_create_{{ $activity->id }}"
+                                               {{ (is_array(old('activity_ids')) && in_array($activity->id, old('activity_ids'))) ? 'checked' : '' }}>
+                                        <label class="form-check-label btn btn-outline-primary" for="activity_create_{{ $activity->id }}">
+                                            {{ $activity->name }}
+                                        </label>
+                                    </div>
+                                @endforeach
+                            @else
+                                <p class="text-muted col-12">{{__('Nessuna attività disponibile per la selezione.')}}</p>
+                            @endif
+                            @error('activity_ids')
+                                <div class="text-danger col-12 mt-2">{{ $message }}</div>
+                            @enderror
                         </div>
 
 
@@ -209,4 +259,24 @@
             </div>
         </div>
     </div>
+    @push('styles')
+    <style>
+        .activity-btn-group .form-check-input {
+            display: none;
+        }
+        .activity-btn-group .form-check-label.btn { /* Applica stili btn solo quando checkbox è nascosto */
+             /* Rimuovi padding extra se usi classi btn che lo hanno già */
+        }
+        .activity-btn-group .form-check-input:checked + .form-check-label.btn {
+            color: #fff;
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+         .activity-btn-group .form-check-input:not(:checked) + .form-check-label.btn {
+            color: #0d6efd;
+            background-color: transparent;
+            border-color: #0d6efd;
+        }
+    </style>
+    @endpush
 </x-app-layout>

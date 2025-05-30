@@ -14,19 +14,8 @@
 
     <div class="py-5">
         <div class="container">
-            @if (session('success'))
-                <div class="alert alert-success" role="alert">
-                    {{ session('success') }}
-                </div>
-            @endif
-            @if (session('error'))
-                <div class="alert alert-danger" role="alert">
-                    {{ session('error') }}
-                </div>
-            @endif
-
+           
             <div class="row">
-                {{-- Colonna Sinistra - Dati Principali e Stato --}}
                 <div class="col-lg-8 mb-4">
                     <div class="card shadow-sm mb-4">
                         <div class="card-header">
@@ -54,6 +43,15 @@
                                 </div>
                             </div>
                             <hr>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>{{ __('Incarico') }}:</strong> {{ $profile->incarico_display_name ?? ($profile->incarico ?: 'N/D') }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                     <p><strong>{{ __('Mansione') }}:</strong> {{ $profile->mansione ?? 'N/D' }}</p>
+                                </div>
+                            </div>
+                            <hr>
                             <h6>{{ __('Residenza') }}</h6>
                             <p>
                                 {{ $profile->residenza_via ?? 'Via non specificata' }},
@@ -65,6 +63,7 @@
                         </div>
                     </div>
 
+                    {{-- ... (resto della vista show invariato, come Stato Attuale, Storici, etc.) ... --}}
                     <div class="card shadow-sm mb-4">
                         <div class="card-header">
                             <h5 class="mb-0">{{ __('Stato Attuale e Assegnazione') }}</h5>
@@ -82,9 +81,6 @@
                                     <p><strong>{{ __('Sezione Corrente') }}:</strong> {{ $currentSectionAssignment->nome }}</p>
                                     <p><strong>{{ __('Ufficio Corrente') }}:</strong> {{ $currentSectionAssignment->office->nome ?? 'N/D' }}</p>
                                     @php
-                                        // Assicurati che $currentSectionAssignment sia l'oggetto Section corretto
-                                        // e che la relazione sectionHistory sia caricata e ordinata correttamente
-                                        // per prendere il pivot dell'assegnazione ATTIVA a QUESTA sezione.
                                         $activePivotForCurrentSection = null;
                                         $relatedSectionFromHistory = $profile->sectionHistory()
                                             ->where('sections.id', $currentSectionAssignment->id)
@@ -116,9 +112,8 @@
                             @endif
                         </div>
                     </div>
-                </div>{{-- Fine Colonna Sinistra --}}
+                </div>
 
-                {{-- Colonna Destra - Storici e Altre Info --}}
                 <div class="col-lg-4 mb-4">
                      <div class="card shadow-sm mb-4">
                         <div class="card-header">
@@ -136,9 +131,8 @@
                             @endif
                         </div>
                     </div>
-                </div>{{-- Fine Colonna Destra --}}
-            </div>{{-- Fine Row Principale --}}
-
+                </div>
+            </div>
 
             <div class="card shadow-sm mb-4">
                 <div class="card-header">
@@ -159,13 +153,13 @@
                                 </thead>
                                 <tbody>
                                     @foreach($profile->employmentPeriods as $period)
-                                        <tr>
-                                            <td>{{ $period->data_inizio_periodo->format('d/m/Y') }}</td>
-                                            <td>{{ $period->data_fine_periodo ? $period->data_fine_periodo->format('d/m/Y') : 'In Corso' }}</td>
-                                            <td>{{ $period->tipo_ingresso }}</td>
-                                            <td>{{ $period->tipo_uscita ?? 'N/D' }}</td>
-                                            <td>{{ $period->note_periodo ?? 'N/D' }}</td>
-                                        </tr>
+                                    <tr>
+                                        <td>{{ $period->data_inizio_periodo->format('d/m/Y') }}</td>
+                                        <td>{{ $period->data_fine_periodo ? $period->data_fine_periodo->format('d/m/Y') : 'In Corso' }}</td>
+                                        <td>{{ $period->tipo_ingresso }}</td>
+                                        <td>{{ $period->tipo_uscita ?? 'N/D' }}</td>
+                                        <td>{{ $period->note_periodo ?? 'N/D' }}</td>
+                                    </tr>
                                     @endforeach
                                 </tbody>
                             </table>
@@ -194,7 +188,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($profile->sectionHistory as $section) {{-- $section qui è un'istanza di Section con dati pivot --}}
+                                    @foreach($profile->sectionHistory as $section)
                                         <tr>
                                             <td>{{ $section->nome }}</td>
                                             <td>{{ $section->office->nome ?? 'N/D' }}</td>
@@ -212,13 +206,12 @@
                 </div>
             </div>
 
+            {{-- Sorveglianza Sanitaria e Corsi Sicurezza (invariati) --}}
             <div class="card shadow-sm mb-4">
                 <div class="card-header">
                     <h5 class="mb-0">{{ __('Sorveglianza Sanitaria') }}</h5>
                 </div>
                 <div class="card-body">
-                    {{-- Qui potresti voler aggiungere un link per registrare un nuovo controllo --}}
-                    {{-- <a href="{{ route('health_check_records.create', ['profile_id' => $profile->id]) }}" class="btn btn-success btn-sm mb-3">Aggiungi Controllo Sanitario</a> --}}
                     @if($profile->healthCheckRecords->isNotEmpty())
                         <div class="table-responsive">
                             <table class="table table-sm table-hover">
@@ -255,8 +248,6 @@
                     <h5 class="mb-0">{{ __('Corsi di Sicurezza Frequentati') }}</h5>
                 </div>
                 <div class="card-body">
-                    {{-- Link per registrare frequenza corso --}}
-                    {{-- <a href="{{ route('safety_courses.record_attendance_form', $profile->id) }}" class="btn btn-success btn-sm mb-3">Registra Frequenza Corso</a> --}}
                     @if($profile->safetyCourses->isNotEmpty())
                         <div class="table-responsive">
                             <table class="table table-sm table-hover">
@@ -270,8 +261,8 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($profile->safetyCourses as $course) {{-- $course è un'istanza di SafetyCourse con dati pivot --}}
-                                     @php $pivot = $course->pivot; @endphp
+                                    @foreach($profile->safetyCourses as $course)
+                                        @php $pivot = $course->pivot; @endphp
                                         <tr class="{{ $pivot->expiration_date && \Carbon\Carbon::parse($pivot->expiration_date)->isPast() ? 'table-danger' : ($pivot->expiration_date && (\Carbon\Carbon::parse($pivot->expiration_date)->isToday() || \Carbon\Carbon::parse($pivot->expiration_date)->isBetween(now(), now()->addMonths(1))) ? 'table-warning' : '') }}">
                                             <td>{{ $course->name }}</td>
                                             <td>{{ $pivot->attended_date ? \Carbon\Carbon::parse($pivot->attended_date)->format('d/m/Y') : 'N/D' }}</td>

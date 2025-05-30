@@ -1,5 +1,48 @@
 {{-- resources/views/profiles/edit.blade.php --}}
 <x-app-layout>
+@push('styles') {{-- Corretto da 'scripts' a 'styles' --}}
+<style>
+    /* Stile per i checkbox delle attività come pulsanti */
+.activity-btn-group .form-check-input {
+    display: none; /* Nasconde il checkbox di default */
+}
+
+.activity-btn-group .form-check-label {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #0d6efd; /* Colore testo pulsante non selezionato (Bootstrap primary) */
+    background-color: transparent;
+    border: 1px solid #0d6efd; /* Bordo pulsante non selezionato */
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.activity-btn-group .form-check-label:hover {
+    background-color: #e9ecef; /* Sfondo leggero all'hover */
+}
+
+.activity-btn-group .form-check-input:checked + .form-check-label {
+    color: #fff; /* Colore testo pulsante selezionato */
+    background-color: #0d6efd; /* Sfondo pulsante selezionato (Bootstrap primary) */
+    border-color: #0d6efd; /* Bordo pulsante selezionato */
+}
+
+.activity-btn-group .form-check-input:disabled + .form-check-label {
+    color: #6c757d;
+    background-color: transparent;
+    border-color: #6c757d;
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+</style>
+@endpush
+
     <x-slot name="header">
         <h2 class="h4 fw-semibold text-dark">
             {{ __('Modifica Profilo Anagrafico:') }} {{ $profile->cognome }} {{ $profile->nome }}
@@ -10,11 +53,13 @@
         <div class="container">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <form method="POST" action="{{ route('profiles.update', $profile->id) }}">
+                    {{-- FORM PRINCIPALE PER L'AGGIORNAMENTO --}}
+                    <form method="POST" action="{{ route('profiles.update', $profile->id) }}" id="updateProfileForm">
                         @csrf
                         @method('PUT')
 
                         <h5 class="card-title mb-3">{{ __('Dati Personali') }}</h5>
+                        {{-- ... (tutti i tuoi campi: grado, nome, cognome, sesso, data_nascita, cf) ... --}}
                         <div class="row">
                             <div class="col-md-2 mb-3">
                                 <label for="grado" class="form-label">{{ __('Grado') }}</label>
@@ -67,9 +112,36 @@
                                 @enderror
                             </div>
                         </div>
+                        
+                        {{-- Incarico e Mansione --}}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="incarico" class="form-label">{{ __('Incarico') }}</label>
+                                <select class="form-select @error('incarico') is-invalid @enderror" id="incarico" name="incarico">
+                                    <option value="">{{ __('Seleziona un incarico...') }}</option>
+                                    @if(isset($incarichiDisponibili))
+                                        @foreach ($incarichiDisponibili as $key => $value)
+                                            <option value="{{ $key }}" {{ old('incarico', $profile->incarico) == $key ? 'selected' : '' }}>{{ $value }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                                @error('incarico')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="mansione" class="form-label">{{ __('Mansione') }}</label>
+                                <input type="text" class="form-control @error('mansione') is-invalid @enderror" id="mansione" name="mansione" value="{{ old('mansione', $profile->mansione) }}">
+                                @error('mansione')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
 
                         <hr class="my-4">
                         <h5 class="card-title mb-3">{{ __('Luogo di Nascita') }}</h5>
+                        {{-- ... (campi luogo di nascita) ... --}}
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="luogo_nascita_citta" class="form-label">{{ __('Città') }}</label>
@@ -103,6 +175,7 @@
 
                         <hr class="my-4">
                         <h5 class="card-title mb-3">{{ __('Luogo di Residenza') }}</h5>
+                        {{-- ... (campi residenza) ... --}}
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="residenza_via" class="form-label">{{ __('Via/Piazza') }}</label>
@@ -145,6 +218,7 @@
 
                         <hr class="my-4">
                         <h5 class="card-title mb-3">{{ __('Contatti') }}</h5>
+                        {{-- ... (campi contatti) ... --}}
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="email" class="form-label">{{ __('Email') }}</label>
@@ -163,50 +237,86 @@
                         </div>
 
                         <hr class="my-4">
-                        <h5 class="card-title mb-3">{{ __('Assegnazione Sezione Attuale') }}</h5>
-                        <div class="alert alert-info" role="alert">
-                            {{__('Per modificare l\'assegnazione di sezione o registrare un nuovo periodo di impiego, utilizzare la sezione dedicata nella scheda del profilo.')}}
-                            {{__('Questi campi mostrano l\'assegnazione corrente e permettono di aggiornare la data di inizio o le note per tale assegnazione.')}}
-                        </div>
+                        <h5 class="card-title mb-3">{{ __('Informazioni Impiego e Assegnazione') }}</h5>
+                        {{-- ... (campi impiego e assegnazione) ... --}}
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="current_section_id" class="form-label">{{ __('Sezione Attuale') }}</label>
+                            <div class="col-md-12 mb-3">
+                                <p><strong>{{ __('Data Inizio Ultimo Periodo di Impiego:') }}</strong> {{ $latestEmploymentPeriodStartDate ?? 'N/D' }}</p>
+                                <small class="form-text text-muted">{{__('Questa data è solo a scopo informativo e non è modificabile da qui.')}}</small>
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+                                <label for="current_section_id" class="form-label">{{ __('Sezione Attuale / Nuova Sezione') }}</label>
                                 <select class="form-select @error('current_section_id') is-invalid @enderror" id="current_section_id" name="current_section_id">
-                                    <option value="">{{ __('Nessuna Assegnazione Attuale') }}</option>
+                                    <option value="">{{ __('Nessuna Assegnazione / Rimuovi Assegnazione') }}</option>
                                     @foreach ($sections as $section)
                                         <option value="{{ $section->id }}" {{ old('current_section_id', $current_section_id) == $section->id ? 'selected' : '' }}>
                                             {{ $section->nome }} ({{ $section->office->nome ?? 'Ufficio non specificato' }})
                                         </option>
                                     @endforeach
                                 </select>
+                                <small class="form-text text-muted">{{__('Seleziona una nuova sezione per spostare il profilo. La data di inizio del nuovo spostamento sarà oggi e la nota sarà "Spostamento in altra sezione". La precedente assegnazione sarà terminata.')}}</small>
                                 @error('current_section_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="data_inizio_assegnazione" class="form-label">{{ __('Data Inizio Assegnazione Attuale') }}</label>
-                                <input type="date" class="form-control @error('data_inizio_assegnazione') is-invalid @enderror" id="data_inizio_assegnazione" name="data_inizio_assegnazione" value="{{ old('data_inizio_assegnazione', $data_inizio_assegnazione) }}">
-                                 <small class="form-text text-muted">{{__('Modifica questa data solo se stai correggendo l\'inizio dell\'attuale assegnazione. Per un nuovo spostamento, usa la gestione periodi/assegnazioni.')}}</small>
-                                @error('data_inizio_assegnazione')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                             <div class="col-md-12 mb-3">
-                                <label for="note_assegnazione" class="form-label">{{ __('Note Assegnazione Attuale') }}</label>
-                                <textarea class="form-control @error('note_assegnazione') is-invalid @enderror" id="note_assegnazione" name="note_assegnazione" rows="3">{{ old('note_assegnazione', $note_assegnazione) }}</textarea>
-                                @error('note_assegnazione')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
 
+                        <hr class="my-4">
+                        <h5 class="card-title mb-3">{{ __('Attività Assegnate') }}</h5>
+                        <div class="row activity-btn-group"> {{-- Classe aggiunta qui --}}
+                            @if($activities->count() > 0)
+                                @foreach ($activities as $activity)
+                                    <div class="col-md-4 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="activity_ids[]" value="{{ $activity->id }}" id="activity_{{ $activity->id }}"
+                                                   {{ in_array($activity->id, old('activity_ids', $profileActivityIds ?? [])) ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="activity_{{ $activity->id }}">
+                                                {{ $activity->name }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @else
+                                <p class="text-muted col-12">{{__('Nessuna attività disponibile per la selezione.')}}</p>
+                            @endif
+                             @error('activity_ids')
+                                <div class="text-danger col-12 mt-2">{{ $message }}</div>
+                            @enderror
+                            @error('activity_ids.*')
+                                <div class="text-danger col-12 mt-2">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- Pulsanti di azione per il form di aggiornamento --}}
                         <div class="mt-4">
                             <button type="submit" class="btn btn-primary">{{ __('Aggiorna Profilo') }}</button>
-                            <a href="{{ route('profiles.index') }}" class="btn btn-secondary">{{ __('Annulla') }}</a>
+                            <a href="{{ route('profiles.show', $profile->id) }}" class="btn btn-secondary">{{ __('Annulla') }}</a>
                         </div>
-                    </form>
+                    </form> {{-- FINE FORM PRINCIPALE PER L'AGGIORNAMENTO --}}
+
+                    {{-- FORM SEPARATO PER L'ELIMINAZIONE --}}
+                    <div class="mt-3 pt-3 border-top d-flex justify-content-end">
+                        <form method="POST" action="{{ route('profiles.destroy', $profile->id) }}" id="deleteProfileForm" class="d-inline" onsubmit="return confirm('{{ __('Sei sicuro di voler eliminare questo profilo? L\'operazione terminerà anche il periodo di impiego e l\'assegnazione alla sezione corrente.') }}');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger">{{ __('Elimina Profilo') }}</button>
+                        </form>
+                    </div>
+
                 </div>
             </div>
         </div>
     </div>
+    {{--
+    @push('scripts') // Lo script confirmDelete() può essere spostato qui se preferisci
+    <script>
+        // function confirmDelete() { // Non più necessario se usi onsubmit direttamente sul form di eliminazione
+        //     if (confirm("{{ __('Sei sicuro di voler eliminare questo profilo? L\'operazione terminerà anche il periodo di impiego e l\'assegnazione alla sezione corrente.') }}")) {
+        //         document.getElementById('deleteProfileForm').submit();
+        //     }
+        // }
+    </script>
+    @endpush
+    --}}
 </x-app-layout>

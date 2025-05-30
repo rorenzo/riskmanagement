@@ -35,14 +35,13 @@ public function create()
     public function store(Request $request) // Sostituisci Request con la tua FormRequest   
     {
         // Esempio:
-        // $validatedData = $request->validate([
-        //     'nome' => 'required|string|max:255',
-        //     'descrizione' => 'nullable|string',
-        //     'office_id' => 'required|exists:offices,id',
-        // ]);
-        // Section::create($validatedData);
-        // return redirect()->route('sections.index')->with('success', 'Sezione creata con successo.');
-        return "SectionController@store - Salvataggio Nuova Sezione (da implementare)";
+         $validatedData = $request->validate([
+             'nome' => 'required|string|max:255',
+             'descrizione' => 'nullable|string',
+             'office_id' => 'required|exists:offices,id',
+         ]);
+         Section::create($validatedData);
+         return redirect()->route('sections.index')->with('success', 'Sezione creata con successo.');
     }
 
     /**
@@ -70,12 +69,12 @@ public function edit(Section $section)
     public function update(Request $request, Section $section) // Sostituisci Request con la tua FormRequest
     {
         // Esempio:
-        // $validatedData = $request->validate([
-        //     'nome' => 'required|string|max:255',
-        //     'descrizione' => 'nullable|string',
-        //     'office_id' => 'required|exists:offices,id',
-        // ]);
-        // $section->update($validatedData);
+         $validatedData = $request->validate([
+             'nome' => 'required|string|max:255',
+             'descrizione' => 'nullable|string',
+             'office_id' => 'required|exists:offices,id',
+         ]);
+         $section->update($validatedData);
          return redirect()->route('sections.index')->with('success', 'Sezione aggiornata con successo.');
 //        return "SectionController@update - Aggiornamento Sezione ID: {$section->id} (da implementare)";
     }

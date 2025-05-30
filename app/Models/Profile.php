@@ -5,14 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
 
 class Profile extends Model
 {
     use HasFactory, SoftDeletes;
+
+    // Definisci i valori permessi per l'incarico
+    public const INCARICHI_DISPONIBILI = [
+        'direttore' => 'Direttore',
+        'capo ufficio' => 'Capo Ufficio',
+        'capo sezione' => 'Capo Sezione',
+        'addetto' => 'Addetto',
+    ];
 
     protected $fillable = [
         'grado',
@@ -27,6 +33,8 @@ class Profile extends Model
         'email',
         'cellulare',
         'cf',
+        'incarico', // Aggiunto
+        'mansione', // Aggiunto
         'residenza_via',
         'residenza_citta',
         'residenza_provincia',
@@ -62,16 +70,12 @@ class Profile extends Model
         return $this->hasMany(HealthCheckRecord::class)->orderBy('check_up_date', 'desc');
     }
 
-    /**
-     * I corsi di sicurezza frequentati da questo profilo.
-     * Si accede ai dati della tabella pivot tramite ->pivot.
-     */
     public function safetyCourses(): BelongsToMany
     {
         return $this->belongsToMany(SafetyCourse::class, 'profile_safety_course')
                     ->withPivot('id', 'attended_date', 'expiration_date', 'certificate_number', 'notes', 'deleted_at')
-                    ->withTimestamps() // Per created_at e updated_at sulla tabella pivot
-                    ->orderByPivot('attended_date', 'desc'); // Opzionale: ordina per data frequenza
+                    ->withTimestamps()
+                    ->orderByPivot('attended_date', 'desc');
     }
 
 
@@ -102,5 +106,10 @@ class Profile extends Model
             ->orderBy('expiration_date', 'desc')
             ->first();
     }
+
+    // Helper per ottenere il display name dell'incarico
+    public function getIncaricoDisplayNameAttribute(): ?string
+    {
+        return self::INCARICHI_DISPONIBILI[$this->incarico] ?? $this->incarico;
+    }
 }
- 

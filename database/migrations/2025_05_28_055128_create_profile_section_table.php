@@ -41,6 +41,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('anagrafica_section');
+        Schema::dropIfExists('profile_section');
     }
 };
