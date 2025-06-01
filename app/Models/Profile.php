@@ -8,9 +8,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Profile extends Model
-{
-    use HasFactory, SoftDeletes;
+class Profile extends Model {
+
+    use HasFactory,
+        SoftDeletes;
 
     // Definisci i valori permessi per l'incarico
     public const INCARICHI_DISPONIBILI = [
@@ -41,75 +42,76 @@ class Profile extends Model
         'residenza_cap',
         'residenza_nazione',
     ];
-
     protected $casts = [
         'data_nascita' => 'date',
     ];
 
-    public function sectionHistory(): BelongsToMany
-    {
+    public function sectionHistory(): BelongsToMany {
         return $this->belongsToMany(Section::class, 'profile_section')
-                    ->withPivot('data_inizio_assegnazione', 'data_fine_assegnazione', 'note')
-                    ->withTimestamps()
-                    ->orderByPivot('data_inizio_assegnazione', 'desc');
+                        ->withPivot('data_inizio_assegnazione', 'data_fine_assegnazione', 'note')
+                        ->withTimestamps()
+                        ->orderByPivot('data_inizio_assegnazione', 'desc');
     }
 
-    public function employmentPeriods(): HasMany
-    {
+    public function employmentPeriods(): HasMany {
         return $this->hasMany(EmploymentPeriod::class)->orderBy('data_inizio_periodo', 'desc');
     }
 
-    public function activities(): BelongsToMany
-    {
+    public function activities(): BelongsToMany {
         return $this->belongsToMany(Activity::class, 'activity_profile')
-                    ->withTimestamps();
+                        ->withTimestamps();
     }
 
-    public function healthCheckRecords(): HasMany
-    {
+    public function healthCheckRecords(): HasMany {
         return $this->hasMany(HealthCheckRecord::class)->orderBy('check_up_date', 'desc');
     }
 
-    public function safetyCourses(): BelongsToMany
-    {
+    public function safetyCourses(): BelongsToMany {
         return $this->belongsToMany(SafetyCourse::class, 'profile_safety_course')
-                    ->withPivot('id', 'attended_date', 'expiration_date', 'certificate_number', 'notes', 'deleted_at')
-                    ->withTimestamps()
-                    ->orderByPivot('attended_date', 'desc');
+                        ->withPivot('id', 'attended_date', 'expiration_date', 'certificate_number', 'notes', 'deleted_at')
+                        ->withTimestamps()
+                        ->orderByPivot('attended_date', 'desc');
     }
 
-
     // Metodi helper
-    public function isCurrentlyEmployed(): bool
-    {
+    public function isCurrentlyEmployed(): bool {
         return $this->employmentPeriods()->whereNull('data_fine_periodo')->exists();
     }
 
-    public function getCurrentEmploymentPeriod()
-    {
+    public function getCurrentEmploymentPeriod() {
         return $this->employmentPeriods()->whereNull('data_fine_periodo')->first();
     }
 
-    public function getCurrentSectionAssignment()
-    {
+    public function getCurrentSectionAssignment() {
         if ($this->isCurrentlyEmployed()) {
             return $this->sectionHistory()->wherePivotNull('data_fine_assegnazione')->first();
         }
         return null;
     }
 
-    public function getActiveHealthCheckRecord(int $healthSurveillanceId)
-    {
+    public function getActiveHealthCheckRecord(int $healthSurveillanceId) {
         return $this->healthCheckRecords()
-            ->where('health_surveillance_id', $healthSurveillanceId)
-            ->where('expiration_date', '>=', now())
-            ->orderBy('expiration_date', 'desc')
-            ->first();
+                        ->where('health_surveillance_id', $healthSurveillanceId)
+                        ->where('expiration_date', '>=', now())
+                        ->orderBy('expiration_date', 'desc')
+                        ->first();
     }
 
     // Helper per ottenere il display name dell'incarico
-    public function getIncaricoDisplayNameAttribute(): ?string
-    {
+    public function getIncaricoDisplayNameAttribute(): ?string {
         return self::INCARICHI_DISPONIBILI[$this->incarico] ?? $this->incarico;
+    }
+
+    // Nuova relazione per i DPI assegnati direttamente al profilo (forma esplicita)
+    public function assignedPpes(): BelongsToMany {
+        return $this->belongsToMany(
+                        PPE::class,
+                        'profile_ppe',
+                        'profile_id',
+                        'ppe_id',
+                        'id',
+                        'id'
+                )->withPivot('assignment_type', 'reason')
+                ->withTimestamps();
     }
 }

@@ -25,11 +25,22 @@ class PPE extends Model // Personal Protective Equipment
     {
         // Specifica esplicitamente i nomi delle chiavi esterne e locali sulla tabella pivot
         return $this->belongsToMany(
-            Activity::class,    // Modello correlato
-            'activity_ppe',     // Nome della tabella pivot
-            'ppe_id',           // Chiave esterna del modello corrente (PPE) sulla tabella pivot
-            'activity_id'       // Chiave esterna del modello correlato (Activity) sulla tabella pivot
+            Activity::class, 
+            'activity_ppe',  
+            'ppe_id',        
+            'activity_id'    
         );
-        // ->withTimestamps(); // Aggiungi se la tabella pivot ha timestamps
+    }
+    
+    
+
+    public function profiles(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Profile::class, 
+            'profile_ppe',  
+            'ppe_id',       
+            'profile_id'    
+        )->withTimestamps();
     }
 }

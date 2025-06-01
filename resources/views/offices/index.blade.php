@@ -37,6 +37,7 @@
                                     <th>{{ __('Nome Ufficio') }}</th>
                                     <th>{{ __('Descrizione') }}</th>
                                     <th class="text-center">{{ __('N. Sezioni') }}</th>
+                                    <th class="text-center no-sort">{{ __('Profili') }}</th>
                                     <th class="text-center">{{ __('Azioni') }}</th>
                                 </tr>
                             </thead>
@@ -47,16 +48,21 @@
                                      dal controller e non usiamo serverSide per questa tabella (a meno che non ci siano molti uffici)
                                 --}}
                                 @foreach ($offices as $office)
-                                    <tr>
-                                        <td>{{ $office->nome }}</td>
-                                        <td>{{ Str::limit($office->descrizione, 70) }}</td>
-                                        <td class="text-center">{{ $office->sections_count ?? $office->sections->count() }}</td>
-                                        <td class="text-center">
-                                            <a href="{{ route('offices.show', $office->id) }}" class="btn btn-sm btn-info" title="{{ __('Visualizza') }}">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a href="{{ route('offices.edit', $office->id) }}" class="btn btn-sm btn-primary ms-1" title="{{ __('Modifica') }}">
-                                                <i class="fas fa-edit"></i>
+                                <tr>
+                                    <td>{{ $office->nome }}</td>
+                                    <td>{{ Str::limit($office->descrizione, 70) }}</td>
+                                    <td class="text-center">{{ $office->sections_count ?? $office->sections->count() }}</td>
+                                    <td class="text-center">
+                                        <a href="{{ route('offices.showProfiles', $office->id) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('Vedi Profili in questo Ufficio') }}">
+                                            <i class="fas fa-users"></i>
+                                        </a>
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="{{ route('offices.show', $office->id) }}" class="btn btn-sm btn-info" title="{{ __('Visualizza') }}">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('offices.edit', $office->id) }}" class="btn btn-sm btn-primary ms-1" title="{{ __('Modifica') }}">
+                                            <i class="fas fa-edit"></i>
                                             </a>
                                             <form action="{{ route('offices.destroy', $office->id) }}" method="POST" class="d-inline ms-1" onsubmit="return confirm('{{ __('Sei sicuro di voler eliminare questo ufficio? Verranno eliminate anche tutte le sezioni associate e le relative assegnazioni dei profili.') }}');">
                                                 @csrf
@@ -99,7 +105,7 @@
                         order: [[1, 'asc']], // Ordina per nome ufficio di default
                         columnDefs: [
                             { targets: [2], className: 'text-center' }, // N. Sezioni
-                            { targets: [3], orderable: false, searchable: false, className: 'text-center' } // Azioni
+                            { targets: [3, 4], orderable: false, searchable: false, className: 'text-center' } // Azioni
                         ]
                     });
                 });

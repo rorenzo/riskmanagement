@@ -6,6 +6,7 @@
                 {{ __('Dettaglio Profilo:') }} {{ $profile->cognome }} {{ $profile->nome }}
             </h2>
             <div>
+                <a href="{{ route('profiles.editPpes', $profile->id) }}" class="btn btn-info btn-sm ms-2">{{ __('Gestisci DPI') }}</a> {{-- NUOVO PULSANTE --}}
                 <a href="{{ route('profiles.edit', $profile->id) }}" class="btn btn-primary btn-sm">{{ __('Modifica Profilo') }}</a>
                 <a href="{{ route('profiles.index') }}" class="btn btn-secondary btn-sm">{{ __('Torna alla Lista') }}</a>
             </div>
@@ -131,6 +132,41 @@
                             @endif
                         </div>
                     </div>
+                    
+                    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">{{ __('DPI (Dispositivi di Protezione Individuale) Assegnati') }}</h5>
+        </div>
+        <div class="card-body">
+            @if($profile->assignedPpes && $profile->assignedPpes->count() > 0)
+                <ul class="list-group list-group-flush">
+                    @foreach($profile->assignedPpes as $ppe)
+                        <li class="list-group-item">
+                            <div>
+                                <a href="{{ route('ppes.show', $ppe->id) }}"><strong>{{ $ppe->name }}</strong></a>
+                                @if($ppe->pivot->assignment_type === 'automatic')
+                                    <span class="badge bg-info text-dark ms-2">Automatico</span>
+                                @elseif($ppe->pivot->assignment_type === 'manual')
+                                    <span class="badge bg-warning text-dark ms-2">Manuale</span>
+                                @endif
+                            </div>
+                            @if($ppe->pivot->reason)
+                                <small class="text-muted d-block"><em>Motivazione: {{ $ppe->pivot->reason }}</em></small>
+                            @endif
+                            @if($ppe->description)
+                                <small class="text-muted d-block">{{ Str::limit($ppe->description, 100) }}</small>
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            @else
+                <p class="text-muted">{{ __('Nessun DPI specifico risulta assegnato a questo profilo.') }}</p>
+            @endif
+            <small class="form-text text-muted mt-2 d-block">
+                {{ __('I DPI possono essere assegnati automaticamente in base alle attività o manualmente.') }}
+            </small>
+        </div>
+    </div>
                 </div>
             </div>
 

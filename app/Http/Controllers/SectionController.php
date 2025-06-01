@@ -53,6 +53,22 @@ public function create()
     return view('sections.show', compact('section'));
 }
 
+/**
+     * Display a listing of profiles related to this section.
+     */
+    public function showProfiles(Section $section)
+    {
+        // Carica i profili correntemente assegnati alla sezione
+        // La relazione currentProfiles già filtra per data_fine_assegnazione null e impiego attivo
+        $profiles = $section->currentProfiles()->orderBy('cognome')->orderBy('nome')->get();
+        
+        $parentItemType = __('Sezione');
+        $parentItemName = $section->nome;
+        $backUrl = route('sections.index'); // O route('sections.show', $section->id) se preferisci
+
+        return view('profiles.related_list', compact('profiles', 'parentItemType', 'parentItemName', 'section', 'backUrl'));
+    }
+
     /**
      * Show the form for editing the specified resource.
      */

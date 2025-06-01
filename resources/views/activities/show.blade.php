@@ -14,6 +14,7 @@
 
     <div class="py-5">
         <div class="container">
+            {{-- Card Informazioni Attività --}}
             <div class="card shadow-sm mb-4">
                 <div class="card-header">
                     <h5 class="mb-0">{{ __('Informazioni Attività') }}</h5>
@@ -29,6 +30,7 @@
             </div>
 
             <div class="row">
+                {{-- Card Profili Associati --}}
                 <div class="col-md-6 mb-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-header">
@@ -44,15 +46,13 @@
                                     @endforeach
                                 </ul>
                             @else
-                                <p class="text-muted">{{ __('Nessun profilo attualmente associato a questa attività.') }}</p>
+                                <p class="text-muted">{{ __('Nessun profilo attualmente associato.') }}</p>
                             @endif
                         </div>
-                        {{-- <div class="card-footer">
-                            <a href="#" class="btn btn-outline-primary btn-sm">Gestisci Associazioni Profili</a>
-                        </div> --}}
                     </div>
                 </div>
 
+                {{-- Card DPI Associati --}}
                 <div class="col-md-6 mb-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-header">
@@ -68,21 +68,19 @@
                                     @endforeach
                                 </ul>
                             @else
-                                <p class="text-muted">{{ __('Nessun DPI attualmente associato a questa attività.') }}</p>
+                                <p class="text-muted">{{ __('Nessun DPI attualmente associato.') }}</p>
                             @endif
                         </div>
-                        {{-- <div class="card-footer">
-                            <a href="#" class="btn btn-outline-primary btn-sm">Gestisci Associazioni DPI</a>
-                        </div> --}}
                     </div>
                 </div>
             </div>
 
-             <div class="row">
+            {{-- Card Sorveglianze Sanitarie Associate --}}
+            <div class="row">
                 <div class="col-md-12 mb-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-header">
-                            <h5 class="mb-0">{{ __('Sorveglianze Sanitarie Associate a Questa Attività') }}</h5>
+                            <h5 class="mb-0">{{ __('Sorveglianze Sanitarie Associate') }}</h5>
                         </div>
                         <div class="card-body">
                             @if($activity->healthSurveillances && $activity->healthSurveillances->count() > 0)
@@ -97,12 +95,9 @@
                                     @endforeach
                                 </ul>
                             @else
-                                <p class="text-muted">{{ __('Nessuna sorveglianza sanitaria attualmente associata a questa attività.') }}</p>
+                                <p class="text-muted">{{ __('Nessuna sorveglianza sanitaria associata.') }}</p>
                             @endif
                         </div>
-                        {{-- <div class="card-footer">
-                            <a href="#" class="btn btn-outline-primary btn-sm">Gestisci Associazioni Sorveglianze</a>
-                        </div> --}}
                     </div>
                 </div>
             </div>

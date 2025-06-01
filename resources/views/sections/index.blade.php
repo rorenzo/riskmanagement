@@ -38,6 +38,7 @@
                                     <th>{{ __('Ufficio di Appartenenza') }}</th>
                                     <th>{{ __('Descrizione') }}</th>
                                     <th class="text-center">{{ __('N. Profili Attualmente Assegnati') }}</th>
+                                    <th class="text-center no-sort">{{ __('Profili') }}</th> {{-- NUOVA COLONNA --}}
                                     <th class="text-center">{{ __('Azioni') }}</th>
                                 </tr>
                             </thead>
@@ -48,6 +49,11 @@
                                         <td>{{ $section->office->nome ?? 'N/D' }}</td>
                                         <td>{{ Str::limit($section->descrizione, 70) }}</td>
                                         <td class="text-center">{{ $section->current_anagrafiche_count ?? $section->currentProfiles()->count() }}</td>
+                                         <td class="text-center"> {{-- NUOVA CELLA --}}
+                                            <a href="{{ route('sections.showProfiles', $section->id) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('Vedi Profili') }}">
+                                                <i class="fas fa-users"></i>
+                                            </a>
+                                        </td>
                                         <td class="text-center">
                                             <a href="{{ route('sections.show', $section->id) }}" class="btn btn-sm btn-info" title="{{ __('Visualizza') }}">
                                                 <i class="fas fa-eye"></i>
@@ -93,7 +99,7 @@
                         order: [[1, 'asc']], // Ordina per nome sezione
                         columnDefs: [
                             { targets: [3], className: 'text-center' }, // N. Profili
-                            { targets: [4], orderable: false, searchable: false, className: 'text-center' } // Azioni
+                            { targets: [4, 5], orderable: false, searchable: false, className: 'text-center' } // Azioni
                         ]
                     });
                 });

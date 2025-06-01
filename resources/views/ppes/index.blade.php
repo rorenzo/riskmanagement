@@ -37,6 +37,7 @@
                                     <th>{{ __('Nome DPI') }}</th>
                                     <th>{{ __('Descrizione') }}</th>
                                     <th class="text-center">{{ __('N. Attività Associate') }}</th>
+                                    <th class="text-center no-sort">{{ __('Profili') }}</th>
                                     <th class="text-center">{{ __('Azioni') }}</th>
                                 </tr>
                             </thead>
@@ -46,6 +47,11 @@
                                         <td>{{ $ppe->name }}</td>
                                         <td>{{ Str::limit($ppe->description, 70) }}</td>
                                         <td class="text-center">{{ $ppe->activities_count ?? $ppe->activities->count() }}</td>
+                                        <td class="text-center">
+    <a href="{{ route('ppes.showProfiles', $ppe->id) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('Vedi Profili con questo DPI') }}">
+        <i class="fas fa-users"></i>
+    </a>
+</td>
                                         <td class="text-center">
                                             <a href="{{ route('ppes.show', $ppe->id) }}" class="btn btn-sm btn-info" title="{{ __('Visualizza') }}">
                                                 <i class="fas fa-eye"></i>
@@ -92,7 +98,7 @@
                         order: [[1, 'asc']], // Ordina per nome DPI
                         columnDefs: [
                             { targets: [2], className: 'text-center' }, // N. Attività
-                            { targets: [3], orderable: false, searchable: false, className: 'text-center' } // Azioni
+                            { targets: [3, 4], orderable: false, searchable: false, className: 'text-center' } // Azioni
                         ]
                     });
                 });

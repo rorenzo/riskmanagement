@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Office;
+use App\Models\Profile;
 use Illuminate\Http\Request; // Per la validazione di base, considera di creare FormRequest dedicati
 
 class OfficeController extends Controller
@@ -129,4 +130,18 @@ class OfficeController extends Controller
 //            return response()->json(['message' => 'Errore durante l\'eliminazione dell\'ufficio: ' . $e->getMessage()], 500); // Per ora JSON
         }
     }
+    
+    public function showProfiles(Office $office)
+{
+    $sectionIds = $office->sections()->pluck('id');
+    $profiles = Profile::whereHas('sectionHistory', function ($query) use ($sectionIds) {
+        $query->whereIn('section_id', $sectionIds)->whereNull('data_fine_assegnazione');
+    })->whereHas('employmentPeriods', fn($q) => $q->whereNull('data_fine_periodo')) // Solo impiegati attivi
+      ->orderBy('cognome')->orderBy('nome')->get();
+
+    $parentItemType = __('Ufficio');
+    $parentItemName = $office->nome;
+    $backUrl = route('offices.index');
+    return view('profiles.related_list', compact('profiles', 'parentItemType', 'parentItemName', 'office', 'backUrl'));
+}
 }

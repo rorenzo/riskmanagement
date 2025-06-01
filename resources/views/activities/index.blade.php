@@ -39,6 +39,7 @@
                                     <th class="text-center">{{ __('N. Profili Associati') }}</th>
                                     <th class="text-center">{{ __('N. DPI Associati') }}</th>
                                     <th class="text-center">{{ __('N. Sorv. Sanitarie Associate') }}</th>
+                                   <th class="text-center no-sort">{{ __('Profili') }}</th>
                                     <th class="text-center actions-column">{{ __('Azioni') }}</th>
                                 </tr>
                             </thead>
@@ -50,6 +51,11 @@
                                         <td class="text-center">{{ $activity->profiles_count ?? $activity->profiles->count() }}</td>
                                         <td class="text-center">{{ $activity->ppes_count ?? $activity->ppes->count() }}</td>
                                         <td class="text-center">{{ $activity->health_surveillances_count ?? $activity->healthSurveillances->count() }}</td>
+                                        <td class="text-center">
+    <a href="{{ route('activity.showProfiles', $activity->id) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('Vedi Profili con questa Attività') }}">
+        <i class="fas fa-users"></i>
+    </a>
+</td>
                                         <td class="text-center">
                                             <a href="{{ route('activities.show', $activity->id) }}" class="btn btn-sm btn-info" title="{{ __('Visualizza') }}">
                                                 <i class="fas fa-eye"></i>

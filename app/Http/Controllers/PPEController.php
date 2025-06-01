@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PPE;
+use App\Models\Profile;
 use App\Models\Activity; // Per l'assegnazione dei DPI alle attività
 use Illuminate\Http\Request; // Considera FormRequest dedicate
 
@@ -87,6 +88,18 @@ class PPEController extends Controller
          return redirect()->route('ppes.index')->with('success', 'DPI eliminato con successo.');
 //        return response()->json(['message' => 'DPI eliminato']); // Placeholder
     }
+    
+    public function showProfiles(PPE $ppe)
+{
+    // Assumendo che la relazione 'profiles' esista nel modello PPE come definito precedentemente
+    $profiles = $ppe->profiles()
+                    ->whereHas('employmentPeriods', fn($q) => $q->whereNull('data_fine_periodo'))
+                    ->orderBy('cognome')->orderBy('nome')->get();
+    $parentItemType = __('DPI');
+    $parentItemName = $ppe->name;
+    $backUrl = route('ppes.index');
+    return view('profiles.related_list', compact('profiles', 'parentItemType', 'parentItemName', 'ppe', 'backUrl'));
+}
 
     // --- Metodi per associare/dissociare DPI alle attività ---
     // Questi potrebbero stare anche in ActivityController o in un controller dedicato
