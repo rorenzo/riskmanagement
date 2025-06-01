@@ -39,7 +39,8 @@
                                     <th class="text-center">{{ __('N. Profili Associati') }}</th>
                                     <th class="text-center">{{ __('N. DPI Associati') }}</th>
                                     <th class="text-center">{{ __('N. Sorv. Sanitarie Associate') }}</th>
-                                   <th class="text-center no-sort">{{ __('Profili') }}</th>
+                                                                        <th class="text-center">{{ __('N. Corsi') }}</th> {{-- NUOVA COLONNA --}}
+                                    <th class="text-center no-sort">{{ __('Profili') }}</th>
                                     <th class="text-center actions-column">{{ __('Azioni') }}</th>
                                 </tr>
                             </thead>
@@ -51,6 +52,8 @@
                                         <td class="text-center">{{ $activity->profiles_count ?? $activity->profiles->count() }}</td>
                                         <td class="text-center">{{ $activity->ppes_count ?? $activity->ppes->count() }}</td>
                                         <td class="text-center">{{ $activity->health_surveillances_count ?? $activity->healthSurveillances->count() }}</td>
+                                                                               <td class="text-center">{{ $activity->safety_courses_count }}</td> {{-- NUOVA CELLA CON IL CONTEGGIO --}}
+
                                         <td class="text-center">
     <a href="{{ route('activity.showProfiles', $activity->id) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('Vedi Profili con questa Attività') }}">
         <i class="fas fa-users"></i>
@@ -106,8 +109,8 @@
                         },
                         order: [[1, 'asc']], // Ordina per nome attività
                         columnDefs: [
-                            { targets: [3, 4, 2], className: 'text-center' }, // Conteggi
-                            { targets: [5], orderable: false, searchable: false, className: 'text-center' } // Azioni
+                            { targets: [3, 4, 2, 5], className: 'text-center' }, // Conteggi
+                            { targets: [6], orderable: false, searchable: false, className: 'text-center' } // Azioni
                         ]
                     });
                 });

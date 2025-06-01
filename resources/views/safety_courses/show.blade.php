@@ -14,6 +14,7 @@
 
     <div class="py-5">
         <div class="container">
+            {{-- CARD INFORMAZIONI CORSO --}}
             <div class="card shadow-sm mb-4">
                 <div class="card-header">
                     <h5 class="mb-0">{{ __('Informazioni Corso') }}</h5>
@@ -29,7 +30,8 @@
                 </div>
             </div>
 
-            <div class="card shadow-sm">
+            {{-- CARD PROFILI CHE HANNO FREQUENTATO --}}
+            <div class="card shadow-sm mb-4"> {{-- Aggiunto mb-4 per spaziatura --}}
                 <div class="card-header">
                     <h5 class="mb-0">{{ __('Profili che hanno frequentato questo corso (Storico)') }}</h5>
                 </div>
@@ -47,7 +49,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($safetyCourse->profiles as $profile) {{-- $profile è un'istanza di Profile con dati pivot --}}
+                                    @foreach($safetyCourse->profiles as $profile)
                                         @php $pivot = $profile->pivot; @endphp
                                         <tr class="{{ $pivot->expiration_date && \Carbon\Carbon::parse($pivot->expiration_date)->isPast() ? 'table-danger' : '' }}">
                                             <td>
@@ -68,10 +70,27 @@
                         <p class="text-muted">{{ __('Nessun profilo ha ancora frequentato questo corso o le frequenze non sono state registrate.') }}</p>
                     @endif
                 </div>
-                {{-- Potresti aggiungere un link per registrare la frequenza di questo corso per un profilo --}}
-                {{-- <div class="card-footer">
-                    <a href="{{ route('safety_courses.record_attendance_form_for_course', $safetyCourse->id) }}" class="btn btn-success btn-sm">Registra Frequenza</a>
-                </div> --}}
+                {{-- ... (eventuale footer card commentato) ... --}}
+            </div>
+
+            {{-- NUOVA CARD: Attività Associate a Questo Corso --}}
+            <div class="card shadow-sm"> {{-- Se la card precedente ha mb-4, questa non necessita di mt-4 --}}
+                <div class="card-header">
+                    <h5 class="mb-0">{{ __('Attività che richiedono questo Corso') }}</h5>
+                </div>
+                <div class="card-body">
+                    @if($safetyCourse->activities && $safetyCourse->activities->count() > 0)
+                        <ul class="list-group list-group-flush">
+                            @foreach($safetyCourse->activities as $activity)
+                                <li class="list-group-item">
+                                    <a href="{{ route('activities.show', $activity->id) }}">{{ $activity->name }}</a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <p class="text-muted">{{ __('Nessuna attività attualmente associata a questo corso.') }}</p>
+                    @endif
+                </div>
             </div>
         </div>
     </div>

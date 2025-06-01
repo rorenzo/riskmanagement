@@ -1,10 +1,13 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers; // Per l'assegnazione alle attività
+ // Considera FormRequest dedicate
 
+use App\Models\HealthCheckRecord;
 use App\Models\HealthSurveillance;
-use App\Models\Activity; // Per l'assegnazione alle attività
-use Illuminate\Http\Request; // Considera FormRequest dedicate
+use App\Models\Profile;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class HealthSurveillanceController extends Controller
 {
@@ -145,5 +148,19 @@ class HealthSurveillanceController extends Controller
             ], 500);
         }
     }
+    
+    public function showProfiles(HealthSurveillance $healthSurveillance)
+{
+    $profileIds = HealthCheckRecord::where('health_surveillance_id', $healthSurveillance->id)
+                                   ->distinct()
+                                   ->pluck('profile_id');
+    $profiles = Profile::whereIn('id', $profileIds)
+                       ->whereHas('employmentPeriods', fn($q) => $q->whereNull('data_fine_periodo'))
+                       ->orderBy('cognome')->orderBy('nome')->get();
+    $parentItemType = __('Sorveglianza Sanitaria');
+    $parentItemName = $healthSurveillance->name;
+    $backUrl = route('health_surveillances.index');
+    return view('profiles.related_list', compact('profiles', 'parentItemType', 'parentItemName', 'healthSurveillance', 'backUrl'));
+}
 
 }

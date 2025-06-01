@@ -37,7 +37,8 @@
                                     <th>{{ __('Nome Corso') }}</th>
                                     <th>{{ __('Descrizione') }}</th>
                                     <th class="text-center">{{ __('Durata Validità (Anni)') }}</th>
-                                    {{-- <th class="text-center">{{ __('N. Partecipanti') }}</th> --}}
+                                    <th class="text-center">{{ __('N. Partecipanti') }}</th>
+                                    <th class="text-center no-sort">{{ __('Profili') }}</th>
                                     <th class="text-center">{{ __('Azioni') }}</th>
                                 </tr>
                             </thead>
@@ -47,7 +48,12 @@
                                         <td>{{ $course->name }}</td>
                                         <td>{{ Str::limit($course->description, 70) }}</td>
                                         <td class="text-center">{{ $course->duration_years ?? 'N/A' }}</td>
-                                        {{-- <td class="text-center">{{ $course->profiles_count ?? $course->profiles->count() }}</td> --}}
+                                        <td class="text-center">{{ $course->profiles_count ?? $course->profiles->count() }}</td>
+                                        <td class="text-center">
+    <a href="{{ route('safety_courses.showProfiles', $course->id) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('Vedi Profili con questo Corso') }}">
+        <i class="fas fa-users"></i>
+    </a>
+</td>
                                         <td class="text-center">
                                             <a href="{{ route('safety_courses.show', $course->id) }}" class="btn btn-sm btn-info" title="{{ __('Visualizza') }}">
                                                 <i class="fas fa-eye"></i>
@@ -94,7 +100,7 @@
                         order: [[1, 'asc']], // Ordina per nome corso
                         columnDefs: [
                             { targets: [2], className: 'text-center' }, // Durata
-                            { targets: [3], orderable: false, searchable: false, className: 'text-center' } // Azioni (indice aggiornato se N. Partecipanti è commentato)
+                            { targets: [3,4,5], orderable: false, searchable: false, className: 'text-center' } // Azioni (indice aggiornato se N. Partecipanti è commentato)
                         ]
                     });
                 });

@@ -83,15 +83,34 @@ class SafetyCourseController extends Controller
      */
     public function destroy(SafetyCourse $safetyCourse)
     {
-        // Prima di eliminare il corso, potresti voler gestire le associazioni nella tabella pivot.
-        // Se la tabella pivot ha onDelete('cascade'), le righe pivot verranno eliminate.
-        // Altrimenti, potresti volerle "soft deletare" se hai un modello pivot custom
-        // o semplicemente $safetyCourse->profiles()->detach();
-        $safetyCourse->delete(); // Soft delete
+        try {
+            DB::beginTransaction();
+            // Stacca tutti i profili che hanno frequentato questo corso
+            $safetyCourse->profiles()->detach();
+            // Stacca tutte le attività associate a questo corso <-- NUOVO
+            $safetyCourse->activities()->detach();
 
-         return redirect()->route('safety_courses.index')->with('success', 'Corso di Sicurezza eliminato con successo.');
-//        return response()->json(['message' => 'Corso di Sicurezza eliminato']); // Placeholder
+            $safetyCourse->delete(); // Soft delete
+
+            DB::commit();
+            return redirect()->route('safety_courses.index')->with('success', 'Corso di Sicurezza eliminato con successo.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Errore eliminazione SafetyCourse: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
+            return redirect()->route('safety_courses.index')->with('error', 'Errore durante l\'eliminazione del corso: ' . $e->getMessage());
+        }
     }
+    
+    public function showProfiles(SafetyCourse $safetyCourse)
+{
+    $profiles = $safetyCourse->profiles() // Relazione pivot con attended_date, ecc.
+                             ->whereHas('employmentPeriods', fn($q) => $q->whereNull('data_fine_periodo'))
+                             ->orderBy('cognome')->orderBy('nome')->get();
+    $parentItemType = __('Corso di Sicurezza');
+    $parentItemName = $safetyCourse->name;
+    $backUrl = route('safety_courses.index');
+    return view('profiles.related_list', compact('profiles', 'parentItemType', 'parentItemName', 'safetyCourse', 'backUrl'));
+}
 
 
     // --- Metodi per registrare la frequenza di un corso per un profilo ---

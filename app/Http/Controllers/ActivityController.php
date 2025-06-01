@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Activity;
 use App\Models\Profile;
+use App\Models\SafetyCourse;
+use App\Models\HealthSurveillance;
 use App\Models\PPE;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +18,7 @@ class ActivityController extends Controller
      */
     public function index()
 {
-    $activities = Activity::withCount(['ppes', 'healthSurveillances', 'profiles'])
+    $activities = Activity::withCount(['ppes', 'healthSurveillances', 'profiles', 'safetyCourses'])
                             ->orderBy('name')
                             ->get();
     return view('activities.index', compact('activities'));
@@ -27,8 +29,10 @@ class ActivityController extends Controller
      */
     public function create()
     {
-        $ppes = PPE::orderBy('name')->get(); // Recupera tutti i DPI disponibili
-        return view('activities.create', compact('ppes'));
+        $ppes = PPE::orderBy('name')->get();
+        $healthSurveillances = HealthSurveillance::orderBy('name')->get();
+        $safetyCourses = SafetyCourse::orderBy('name')->get(); // <-- Recupera i corsi
+        return view('activities.create', compact('ppes', 'healthSurveillances', 'safetyCourses')); // <-- Passali alla vista
     }
 
     /**
@@ -39,8 +43,12 @@ class ActivityController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255|unique:activities,name',
             'description' => 'nullable|string',
-            'ppe_ids' => 'nullable|array',          // Valida che ppe_ids sia un array (se presente)
-            'ppe_ids.*' => 'exists:ppes,id',      // Valida che ogni ID in ppe_ids esista nella tabella ppes
+            'ppe_ids' => 'nullable|array',
+            'ppe_ids.*' => 'exists:ppes,id',
+            'health_surveillance_ids' => 'nullable|array',
+            'health_surveillance_ids.*' => 'exists:health_surveillances,id',
+            'safety_course_ids' => 'nullable|array', // <-- Validazione per i corsi
+            'safety_course_ids.*' => 'exists:safety_courses,id', // <-- Validazione per i corsi
         ]);
 
         try {
@@ -50,16 +58,12 @@ class ActivityController extends Controller
                 'description' => $validatedData['description'],
             ]);
 
-            // Associa i DPI selezionati
-            if (!empty($validatedData['ppe_ids'])) {
-                $activity->ppes()->sync($validatedData['ppe_ids']);
-            } else {
-                $activity->ppes()->detach(); // Rimuovi tutte le associazioni se nessun DPI è selezionato
-            }
+            $activity->ppes()->sync($request->input('ppe_ids', []));
+            $activity->healthSurveillances()->sync($request->input('health_surveillance_ids', []));
+            $activity->safetyCourses()->sync($request->input('safety_course_ids', [])); // <-- Associa i corsi
 
             DB::commit();
-            return redirect()->route('activities.index')->with('success', 'Attività creata con successo e DPI associati.');
-
+            return redirect()->route('activities.index')->with('success', 'Attività creata con successo e associazioni aggiornate.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Errore creazione attività: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
@@ -72,9 +76,8 @@ class ActivityController extends Controller
      */
     public function show(Activity $activity)
     {
-         // Carica anche i DPI associati per la visualizzazione
-        $activity->load(['profiles', 'ppes', 'healthSurveillances']);
-        return view('activities.show', compact('activity'));
+         $activity->load(['profiles', 'ppes', 'healthSurveillances', 'safetyCourses']); // <-- Carica anche i safetyCourses
+         return view('activities.show', compact('activity'));
     }
 
     /**
@@ -82,10 +85,21 @@ class ActivityController extends Controller
      */
     public function edit(Activity $activity)
     {
-        $ppes = PPE::orderBy('name')->get(); // Tutti i DPI disponibili
-        $associatedPpeIds = $activity->ppes()->pluck('ppes.id')->toArray(); // ID dei DPI già associati a questa attività
+        $ppes = PPE::orderBy('name')->get();
+        $associatedPpeIds = $activity->ppes()->pluck('ppes.id')->toArray();
 
-        return view('activities.edit', compact('activity', 'ppes', 'associatedPpeIds'));
+        $healthSurveillances = HealthSurveillance::orderBy('name')->get();
+        $associatedHealthSurveillanceIds = $activity->healthSurveillances()->pluck('health_surveillances.id')->toArray();
+        
+        $safetyCourses = SafetyCourse::orderBy('name')->get(); // <-- Recupera tutti i corsi
+        $associatedSafetyCourseIds = $activity->safetyCourses()->pluck('safety_courses.id')->toArray(); // <-- ID dei corsi associati
+
+        return view('activities.edit', compact(
+            'activity',
+            'ppes', 'associatedPpeIds',
+            'healthSurveillances', 'associatedHealthSurveillanceIds',
+            'safetyCourses', 'associatedSafetyCourseIds' // <-- Passa i dati alla vista
+        ));
     }
 
     /**
@@ -96,8 +110,12 @@ class ActivityController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255|unique:activities,name,' . $activity->id,
             'description' => 'nullable|string',
-            'ppe_ids' => 'nullable|array',        // Valida che ppe_ids sia un array (se presente)
-            'ppe_ids.*' => 'exists:ppes,id',    // Valida che ogni ID in ppe_ids esista nella tabella ppes
+            'ppe_ids' => 'nullable|array',
+            'ppe_ids.*' => 'exists:ppes,id',
+            'health_surveillance_ids' => 'nullable|array',
+            'health_surveillance_ids.*' => 'exists:health_surveillances,id',
+            'safety_course_ids' => 'nullable|array', // <-- Validazione per i corsi
+            'safety_course_ids.*' => 'exists:safety_courses,id', // <-- Validazione per i corsi
         ]);
 
         try {
@@ -107,13 +125,12 @@ class ActivityController extends Controller
                 'description' => $validatedData['description'],
             ]);
 
-            // Sincronizza i DPI associati
-            // Se 'ppe_ids' non è presente nella richiesta (es. nessun checkbox selezionato),
-            // sync([]) rimuoverà tutte le associazioni esistenti.
             $activity->ppes()->sync($request->input('ppe_ids', []));
+            $activity->healthSurveillances()->sync($request->input('health_surveillance_ids', []));
+            $activity->safetyCourses()->sync($request->input('safety_course_ids', [])); // <-- Sincronizza i corsi
 
             DB::commit();
-            return redirect()->route('activities.index')->with('success', 'Attività aggiornata con successo e DPI associati.');
+            return redirect()->route('activities.index')->with('success', 'Attività aggiornata con successo e associazioni aggiornate.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Errore aggiornamento attività: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
@@ -128,13 +145,12 @@ class ActivityController extends Controller
     {
         try {
             DB::beginTransaction();
-            // Prima di eliminare l'attività, dissocia tutti i profili, DPI e sorveglianze.
-            // Le foreign key con onDelete('cascade') potrebbero gestire parte di questo.
             $activity->profiles()->detach();
             $activity->ppes()->detach();
             $activity->healthSurveillances()->detach();
+            $activity->safetyCourses()->detach(); // <-- Stacca i corsi prima di eliminare
 
-            $activity->delete(); // Soft delete
+            $activity->delete();
             DB::commit();
             return redirect()->route('activities.index')->with('success', 'Attività eliminata con successo.');
         } catch (\Exception $e) {

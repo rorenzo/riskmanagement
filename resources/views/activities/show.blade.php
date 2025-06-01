@@ -46,7 +46,7 @@
                                     @endforeach
                                 </ul>
                             @else
-                                <p class="text-muted">{{ __('Nessun profilo attualmente associato.') }}</p>
+                                <p class="text-muted">{{ __('Nessun profilo attualmente associato a questa attività.') }}</p>
                             @endif
                         </div>
                     </div>
@@ -55,51 +55,56 @@
                 {{-- Card DPI Associati --}}
                 <div class="col-md-6 mb-4">
                     <div class="card shadow-sm h-100">
-                        <div class="card-header">
-                            <h5 class="mb-0">{{ __('DPI Associati a Questa Attività') }}</h5>
-                        </div>
+                        <div class="card-header"><h5 class="mb-0">{{ __('DPI Associati') }}</h5></div>
                         <div class="card-body">
                             @if($activity->ppes && $activity->ppes->count() > 0)
-                                <ul class="list-group list-group-flush">
-                                    @foreach($activity->ppes as $ppe)
-                                        <li class="list-group-item">
-                                            <a href="{{ route('ppes.show', $ppe->id) }}">{{ $ppe->name }}</a>
-                                        </li>
-                                    @endforeach
-                                </ul>
+                                @foreach($activity->ppes as $ppe)
+                                    <a href="{{ route('ppes.show', $ppe->id) }}" class="badge bg-primary text-decoration-none me-1 mb-1">{{ $ppe->name }}</a>
+                                @endforeach
                             @else
-                                <p class="text-muted">{{ __('Nessun DPI attualmente associato.') }}</p>
+                                <p class="text-muted">{{ __('Nessun DPI associato a questa attività.') }}</p>
                             @endif
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{-- Card Sorveglianze Sanitarie Associate --}}
             <div class="row">
-                <div class="col-md-12 mb-4">
+                 {{-- Card Sorveglianze Sanitarie Associate --}}
+                <div class="col-md-6 mb-4">
                     <div class="card shadow-sm h-100">
-                        <div class="card-header">
-                            <h5 class="mb-0">{{ __('Sorveglianze Sanitarie Associate') }}</h5>
-                        </div>
+                        <div class="card-header"><h5 class="mb-0">{{ __('Sorveglianze Sanitarie Associate') }}</h5></div>
                         <div class="card-body">
                             @if($activity->healthSurveillances && $activity->healthSurveillances->count() > 0)
-                                <ul class="list-group list-group-flush">
-                                    @foreach($activity->healthSurveillances as $hs)
-                                        <li class="list-group-item">
-                                            <a href="{{ route('health_surveillances.show', $hs->id) }}">{{ $hs->name }}</a>
-                                            @if($hs->duration_years)
-                                                <small class="text-muted"> (Validità: {{ $hs->duration_years }} anni)</small>
-                                            @endif
-                                        </li>
-                                    @endforeach
-                                </ul>
+                                @foreach($activity->healthSurveillances as $hs)
+                                    <a href="{{ route('health_surveillances.show', $hs->id) }}" class="badge bg-info text-dark text-decoration-none me-1 mb-1">{{ $hs->name }}</a>
+                                @endforeach
                             @else
-                                <p class="text-muted">{{ __('Nessuna sorveglianza sanitaria associata.') }}</p>
+                                <p class="text-muted">{{ __('Nessuna sorveglianza sanitaria associata a questa attività.') }}</p>
                             @endif
                         </div>
                     </div>
                 </div>
+                
+                {{-- Card Corsi di Sicurezza Associati --}}
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header"><h5 class="mb-0">{{ __('Corsi di Sicurezza Associati') }}</h5></div>
+                        <div class="card-body">
+                            @if($activity->safetyCourses && $activity->safetyCourses->count() > 0)
+                                @foreach($activity->safetyCourses as $sc)
+                                    <a href="{{ route('safety_courses.show', $sc->id) }}" class="badge bg-warning text-dark text-decoration-none me-1 mb-1">{{ $sc->name }}</a>
+                                @endforeach
+                            @else
+                                <p class="text-muted">{{ __('Nessun corso di sicurezza associato a questa attività.') }}</p>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                 <a href="{{ route('activities.index') }}" class="btn btn-secondary">{{ __('Torna alla Lista Attività') }}</a>
             </div>
 
         </div>

@@ -34,4 +34,15 @@ class SafetyCourse extends Model
                     ->withTimestamps() // Per created_at e updated_at sulla tabella pivot
                     ->orderByPivot('attended_date', 'desc'); // Opzionale: ordina per data frequenza
     }
+    
+     public function activities(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Activity::class,
+            'activity_safety_course', // Nome tabella pivot
+            'safety_course_id',       // Chiave esterna di SafetyCourse nella pivot
+            'activity_id'             // Chiave esterna di Activity nella pivot
+        );
+        // ->withTimestamps(); // Se la tabella pivot avesse timestamps
+    }
 }

@@ -53,3 +53,6 @@ Route::get('/offices/{office}/profiles', [OfficeController::class, 'showProfiles
      ->name('offices.showProfiles'); 
 Route::get('/ppes/{ppe}/profiles', [PPEController::class, 'showProfiles'])->name('ppes.showProfiles');
 Route::get('/actyvities/{activity}/profiles', [ActivityController::class, 'showProfiles'])->name('activity.showProfiles');
+Route::get('/safety_courses/{safety_course}/profiles', [SafetyCourseController::class, 'showProfiles'])->name('safety_courses.showProfiles');
+Route::get('/health_surveillances/{health_surveillance}/profiles', [HealthSurveillanceController::class, 'showProfiles'])->name('health_surveillances.showProfiles');
+

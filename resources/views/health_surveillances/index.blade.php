@@ -20,6 +20,7 @@
                                 <th>{{ __('Nome') }}</th>
                                 <th>{{ __('Descrizione') }}</th>
                                 <th class="text-center">{{ __('Validità (Anni)') }}</th>
+                                <th class="text-center no-sort">{{ __('Profili') }}</th>
                                 <th class="text-center no-sort">{{ __('Azioni') }}</th>
                             </tr>
                         </thead>
@@ -69,6 +70,17 @@
                                     return data ? data : 'N/A';
                                 }
                             },
+                                { // Nuova colonna per i profili
+        data: 'id', // Useremo l'id della sorveglianza per costruire il link
+        name: 'profiles',
+        orderable: false,
+        searchable: false,
+        className: 'text-center',
+        render: function(data, type, row) {
+            var profilesUrl = "{{ route('health_surveillances.showProfiles', ':id') }}".replace(':id', data);
+            return `<a href="${profilesUrl}" class="btn btn-sm btn-outline-secondary" title="{{ __('Vedi Profili') }}"><i class="fas fa-users"></i></a>`;
+        }
+    },
                             {
                                 data: 'id',
                                 name: 'actions',

@@ -56,6 +56,18 @@ class Activity extends Model {
         );
     }
     
+    // NUOVA RELAZIONE per i Corsi di Sicurezza
+    public function safetyCourses(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            SafetyCourse::class,
+            'activity_safety_course', // Nome tabella pivot
+            'activity_id',            // Chiave esterna di Activity nella pivot
+            'safety_course_id'        // Chiave esterna di SafetyCourse nella pivot
+        );
+        // ->withTimestamps(); // Se la tabella pivot avesse timestamps
+    }
+    
      /**
      * Le registrazioni dei controlli sanitari per questo tipo di sorveglianza.
      */
