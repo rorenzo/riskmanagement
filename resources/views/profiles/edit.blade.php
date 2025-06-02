@@ -47,6 +47,14 @@
         <h2 class="h4 fw-semibold text-dark">
             {{ __('Modifica Profilo Anagrafico:') }} {{ $profile->cognome }} {{ $profile->nome }}
         </h2>
+         {{-- FORM SEPARATO PER L'ELIMINAZIONE --}}
+                    <div class="mt-3 pt-3 border-top d-flex justify-content-end">
+                        <form method="POST" action="{{ route('profiles.destroy', $profile->id) }}" id="deleteProfileForm" class="d-inline" onsubmit="return confirm('{{ __('Sei sicuro di voler eliminare questo profilo? L\'operazione terminerà anche il periodo di impiego e l\'assegnazione alla sezione corrente.') }}');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger">{{ __('Elimina Profilo') }}</button>
+                        </form>
+                    </div>
     </x-slot>
 
     <div class="py-5">
@@ -264,7 +272,7 @@
 
                         <hr class="my-4">
                         <h5 class="card-title mb-3">{{ __('Attività Assegnate') }}</h5>
-                        <div class="row activity-btn-group"> {{-- Classe aggiunta qui --}}
+                        <div class="row activity-btn-group">
                             @if($activities->count() > 0)
                                 @foreach ($activities as $activity)
                                     <div class="col-md-4 mb-2">
@@ -287,7 +295,7 @@
                                 <div class="text-danger col-12 mt-2">{{ $message }}</div>
                             @enderror
                         </div>
-
+<hr class="my-4">
                         {{-- Pulsanti di azione per il form di aggiornamento --}}
                         <div class="mt-4">
                             <button type="submit" class="btn btn-primary">{{ __('Aggiorna Profilo') }}</button>
@@ -295,14 +303,7 @@
                         </div>
                     </form> {{-- FINE FORM PRINCIPALE PER L'AGGIORNAMENTO --}}
 
-                    {{-- FORM SEPARATO PER L'ELIMINAZIONE --}}
-                    <div class="mt-3 pt-3 border-top d-flex justify-content-end">
-                        <form method="POST" action="{{ route('profiles.destroy', $profile->id) }}" id="deleteProfileForm" class="d-inline" onsubmit="return confirm('{{ __('Sei sicuro di voler eliminare questo profilo? L\'operazione terminerà anche il periodo di impiego e l\'assegnazione alla sezione corrente.') }}');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger">{{ __('Elimina Profilo') }}</button>
-                        </form>
-                    </div>
+                   
 
                 </div>
             </div>

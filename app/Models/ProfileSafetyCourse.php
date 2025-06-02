@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Database\Eloquent\SoftDeletes; // Importa il trait SoftDeletes
+use Illuminate\Database\Eloquent\Relations\BelongsTo; // <-- Assicurati che sia importato CORRETTAMENTE
+
 
 class ProfileSafetyCourse extends Pivot
 {
@@ -36,6 +38,17 @@ class ProfileSafetyCourse extends Pivot
         'notes',
     ];
 
+    
+    public function profile(): BelongsTo // Aggiungi questa relazione
+    {
+        return $this->belongsTo(Profile::class);
+    }
+
+    public function safetyCourse(): BelongsTo // Aggiungi questa relazione
+    {
+        return $this->belongsTo(SafetyCourse::class);
+    }
+    
     // Eventuali relazioni dal modello Pivot stesso (raro ma possibile)
     // Ad esempio, se la riga pivot avesse un creatore:
     // public function creator()

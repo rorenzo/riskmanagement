@@ -3,22 +3,21 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file://192.168.56.101/allusers/riskmanagement/TODO</file>
-            <file>file://192.168.56.101/allusers/riskmanagement/routes/portal.php</file>
-            <file>file://192.168.56.101/allusers/riskmanagement/app/Models/SafetyCourse.php</file>
-            <file>file://192.168.56.101/allusers/riskmanagement/app/Http/Controllers/SafetyCourseController.php</file>
-            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/safety_courses/index.blade.php</file>
-            <file>file://192.168.56.101/allusers/riskmanagement/app/Http/Controllers/HealthSurveillanceController.php</file>
-            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/health_surveillances/index.blade.php</file>
-            <file>file://192.168.56.101/allusers/riskmanagement/app/Http/Controllers/ActivityController.php</file>
-            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/activities/create.blade.php</file>
-            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/activities/edit.blade.php</file>
-            <file>file://192.168.56.101/allusers/riskmanagement/database/migrations/2025_06_01_030928_create_profile_ppe_table.php</file>
-            <file>file://192.168.56.101/allusers/riskmanagement/database/migrations/2025_06_01_070858_create_activity_safety_course_table.php</file>
-            <file>file://192.168.56.101/allusers/riskmanagement/app/Models/Activity.php</file>
-            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/activities/show.blade.php</file>
-            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/safety_courses/show.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/app/Http/Controllers/AnagraficaController.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/profiles/show.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/profiles/edit.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/profiles/edit_ppes.blade.php</file>
             <file>file://192.168.56.101/allusers/riskmanagement/resources/views/activities/index.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/app/Http/Controllers/HealthCheckRecordController.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/routes/portal.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/health_check_records/create.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/health_check_records/edit.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/routes/web.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/layouts/navigation.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/app/Http/Controllers/ProfileSafetyCourseController.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/app/Models/ProfileSafetyCourse.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/profile_safety_courses/create.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/profile_safety_courses/edit.blade.php</file>
         </group>
     </open-files>
 </project-private>

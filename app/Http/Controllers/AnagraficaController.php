@@ -4,15 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Profile;
 use App\Models\Section;
-use App\Models\PPE;
 use App\Models\EmploymentPeriod;
-use App\Models\Activity; // Aggiunto per le attività
+use App\Models\Activity;
+use App\Models\PPE;
+use App\Models\SafetyCourse;
+use App\Models\HealthSurveillance;
+use App\Models\HealthCheckRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\{Log, Schema,Validator};
-
+use Illuminate\Support\Facades\{Log, Schema, Validator};
 
 class AnagraficaController extends Controller
 {
@@ -21,138 +23,137 @@ class AnagraficaController extends Controller
      */
     public function index()
     {
-    $allSections = Section::with('office')->orderBy('nome')->get();
-    $sectionsForFilter = $allSections->mapWithKeys(function ($section) {
-        $displayText = $section->nome;
-        
-        if ($section->office && $section->office->nome) {
-            $displayText .= " ({$section->office->nome})";
-        }
-
-        return [$section->nome => $displayText];
-    });
-    return view('profiles.index', compact('sectionsForFilter'));
-
+        $allSections = Section::with('office')->orderBy('nome')->get();
+        $sectionsForFilter = $allSections->mapWithKeys(function ($section) {
+            $displayText = $section->nome;
+            if ($section->office && $section->office->nome) {
+                $displayText .= " ({$section->office->nome})";
+            }
+            return [$section->nome => $displayText];
+        });
+        return view('profiles.index', compact('sectionsForFilter'));
     }
 
     /**
      * Fornisce i dati per DataTables server-side.
      */
- 
-public function data(Request $request)
-{
-   try {
-        $totalData = Profile::query()->count();
-        $profileColumns = Schema::getColumnListing('profiles');
-        $qualifiedProfileColumns = array_map(fn($c) => "profiles.$c", $profileColumns);
+    public function data(Request $request)
+    {
+        try {
+            $totalData = Profile::query()->count();
+            $profileColumns = Schema::getColumnListing('profiles');
+            $qualifiedProfileColumns = array_map(fn($c) => "profiles.$c", $profileColumns);
 
-        $query = Profile::query()
-            ->select(array_merge($qualifiedProfileColumns, [
-                'sections.nome as current_section_name',
-                'offices.nome as current_office_name'
-            ]))
-            ->leftJoin('profile_section', function ($join) {
-                $join->on('profiles.id', '=', 'profile_section.profile_id')
-                     ->whereNull('profile_section.data_fine_assegnazione');
-            })
-            ->leftJoin('sections', 'profile_section.section_id', '=', 'sections.id')
-            ->leftJoin('offices', 'sections.office_id', '=', 'offices.id');
-        if ($request->filled('section_filter') && $request->section_filter !== "") {
-            $query->where('sections.nome', $request->section_filter);
-        }
-        $query->whereHas('employmentPeriods', function ($q) {
-            $q->whereNull('data_fine_periodo');
-        });
-        if ($request->filled('search.value')) {
-            $searchValue = $request->input('search.value');
-            $query->where(function ($q) use ($searchValue) {
-                $q->where('profiles.nome', 'LIKE', "%{$searchValue}%")
-                  ->orWhere('profiles.cognome', 'LIKE', "%{$searchValue}%")
-                  ->orWhere('profiles.grado', 'LIKE', "%{$searchValue}%")
-                  ->orWhere('profiles.email', 'LIKE', "%{$searchValue}%")
-                  ->orWhere('profiles.cf', 'LIKE', "%{$searchValue}%")
-                  ->orWhere('sections.nome', 'LIKE', "%{$searchValue}%")
-                  ->orWhere('offices.nome', 'LIKE', "%{$searchValue}%");
-            });
-        }
+            $query = Profile::query()
+                ->select(array_merge($qualifiedProfileColumns, [
+                    'sections.nome as current_section_name',
+                    'offices.nome as current_office_name'
+                ]))
+                ->leftJoin('profile_section', function ($join) {
+                    $join->on('profiles.id', '=', 'profile_section.profile_id')
+                         ->whereNull('profile_section.data_fine_assegnazione');
+                })
+                ->leftJoin('sections', 'profile_section.section_id', '=', 'sections.id')
+                ->leftJoin('offices', 'sections.office_id', '=', 'offices.id');
 
-        $columnsToGroupBy = array_merge($qualifiedProfileColumns, ['sections.nome', 'offices.nome']);
-        $query->groupBy($columnsToGroupBy);
-        
-        $totalFiltered = DB::query()->fromSub($query, 'sub')->count();
-        if ($request->has('order') && is_array($request->input('order')) && count($request->input('order')) > 0) {
-            $orderColumnIndex = $request->input('order.0.column');
-            $orderDirection = $request->input('order.0.dir');
-            $columns = $request->input('columns');
-            if (isset($columns[$orderColumnIndex]['data'])) {
-                $columnToSort = $columns[$orderColumnIndex]['data'];
-                $sortMapping = [
-                    'grado'                 => 'profiles.grado',
-                    'nome'                  => 'profiles.nome',
-                    'cognome'               => 'profiles.cognome',
-                    'current_section_name'  => 'sections.nome',
-                    'current_office_name'   => 'offices.nome'
-                ];
-                if (array_key_exists($columnToSort, $sortMapping)) {
-                    $query->orderBy($sortMapping[$columnToSort], $orderDirection);
-                } else {
-                    $query->orderBy('profiles.cognome', 'asc')->orderBy('profiles.nome', 'asc');
-                }
+            if ($request->filled('section_filter') && $request->section_filter !== "") {
+                $query->where('sections.nome', $request->section_filter);
             }
-        } else {
-            $query->orderBy('profiles.cognome', 'asc')->orderBy('profiles.nome', 'asc');
-        }
+            // Filtra solo per profili attualmente impiegati, se necessario per la vista index
+            // $query->whereHas('employmentPeriods', function ($q) {
+            //     $q->whereNull('data_fine_periodo');
+            // });
 
-        if ($request->has('length') && $request->input('length') != -1) {
-            $query->skip($request->input('start'))->take($request->input('length'));
-        }
-        
-        $profiles = $query->get();
-        $data = $profiles->map(function ($profile) {
-            return [
-                'id' => $profile->id,
-                'grado' => $profile->grado ?? 'N/D',
-                'nome' => $profile->nome,
-                'cognome' => $profile->cognome,
-                'current_section_name' => $profile->current_section_name ?? 'N/D',
-                'current_office_name' => $profile->current_office_name ?? 'N/D',
+            if ($request->filled('search.value')) {
+                $searchValue = $request->input('search.value');
+                $query->where(function ($q) use ($searchValue) {
+                    $q->where('profiles.nome', 'LIKE', "%{$searchValue}%")
+                      ->orWhere('profiles.cognome', 'LIKE', "%{$searchValue}%")
+                      ->orWhere('profiles.grado', 'LIKE', "%{$searchValue}%")
+                      ->orWhere('profiles.email', 'LIKE', "%{$searchValue}%")
+                      ->orWhere('profiles.cf', 'LIKE', "%{$searchValue}%")
+                      ->orWhere('profiles.mansione', 'LIKE', "%{$searchValue}%") // Aggiunto per ricerca
+                      ->orWhere('profiles.incarico', 'LIKE', "%{$searchValue}%") // Aggiunto per ricerca
+                      ->orWhere('sections.nome', 'LIKE', "%{$searchValue}%")
+                      ->orWhere('offices.nome', 'LIKE', "%{$searchValue}%");
+                });
+            }
+
+            $columnsToGroupBy = array_merge($qualifiedProfileColumns, ['sections.nome', 'offices.nome']);
+            $query->groupBy($columnsToGroupBy);
+            
+            $totalFiltered = DB::query()->fromSub($query, 'sub')->count();
+
+            if ($request->has('order') && is_array($request->input('order')) && count($request->input('order')) > 0) {
+                $orderColumnIndex = $request->input('order.0.column');
+                $orderDirection = $request->input('order.0.dir');
+                $columns = $request->input('columns');
+                if (isset($columns[$orderColumnIndex]['data'])) {
+                    $columnToSort = $columns[$orderColumnIndex]['data'];
+                    $sortMapping = [
+                        'grado'                 => 'profiles.grado',
+                        'nome'                  => 'profiles.nome',
+                        'cognome'               => 'profiles.cognome',
+                        'mansione'              => 'profiles.mansione',
+                        'incarico'              => 'profiles.incarico',
+                        'current_section_name'  => 'sections.nome',
+                        'current_office_name'   => 'offices.nome'
+                    ];
+                    if (array_key_exists($columnToSort, $sortMapping)) {
+                        $query->orderBy($sortMapping[$columnToSort], $orderDirection);
+                    } else {
+                        $query->orderBy('profiles.cognome', 'asc')->orderBy('profiles.nome', 'asc');
+                    }
+                }
+            } else {
+                $query->orderBy('profiles.cognome', 'asc')->orderBy('profiles.nome', 'asc');
+            }
+
+            if ($request->has('length') && $request->input('length') != -1) {
+                $query->skip($request->input('start'))->take($request->input('length'));
+            }
+            
+            $profiles = $query->get();
+            $data = $profiles->map(function ($profile) {
+                return [
+                    'id' => $profile->id,
+                    'grado' => $profile->grado ?? 'N/D',
+                    'nome' => $profile->nome,
+                    'cognome' => $profile->cognome,
+                    'mansione' => $profile->mansione ?? 'N/D', // Aggiunto
+                    'incarico_display' => $profile->incarico_display_name ?? ($profile->incarico ?: 'N/D'), // Aggiunto
+                    'current_section_name' => $profile->current_section_name ?? 'N/D',
+                    'current_office_name' => $profile->current_office_name ?? 'N/D',
+                ];
+            });
+            $response = [
+                "draw"            => intval($request->input('draw')),
+                "recordsTotal"    => intval($totalData),
+                "recordsFiltered" => intval($totalFiltered),
+                "data"            => $data
             ];
-        });
-        $response = [
-            "draw"            => intval($request->input('draw')),
-            "recordsTotal"    => intval($totalData),
-            "recordsFiltered" => intval($totalFiltered),
-            "data"            => $data
-        ];
-        return response()->json($response);
+            return response()->json($response);
 
-    } catch (\Exception $e) {
-        Log::error("Errore in AnagraficaController@data: " . $e->getMessage() . "\n" . $e->getTraceAsString());
-        return response()->json([
-            'error' => 'Si è verificato un errore sul server.',
-            'message' => $e->getMessage()
-        ], 500);
+        } catch (\Exception $e) {
+            Log::error("Errore in AnagraficaController@data: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return response()->json([
+                'error' => 'Si è verificato un errore sul server.',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
-}
-    /**
-     * Show the form for creating a new resource.
-     */
-public function create()
+
+    public function create()
     {
         $sections = Section::with('office')->orderBy('nome')->get();
         $activities = Activity::orderBy('name')->get();
-        $incarichiDisponibili = Profile::INCARICHI_DISPONIBILI; // Valori per il dropdown incarico
-
+        $incarichiDisponibili = Profile::INCARICHI_DISPONIBILI;
         return view('profiles.create', compact('sections', 'activities', 'incarichiDisponibili'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $incarichiRule = Rule::in(array_keys(Profile::INCARICHI_DISPONIBILI));
-
         $validatedData = $request->validate([
             'grado' => 'nullable|string|max:50',
             'nome' => 'required|string|max:255',
@@ -167,7 +168,7 @@ public function create()
             'cellulare' => 'nullable|string|max:20|unique:profiles,cellulare',
             'cf' => 'nullable|string|max:16|unique:profiles,cf',
             'incarico' => ['nullable', 'string', $incarichiRule],
-            'mansione' => 'nullable|string|max:255', // Aggiunta max lunghezza per mansione se desiderato
+            'mansione' => 'nullable|string|max:255',
             'residenza_via' => 'nullable|string|max:255',
             'residenza_citta' => 'nullable|string|max:255',
             'residenza_provincia' => 'nullable|string|max:2',
@@ -182,7 +183,6 @@ public function create()
 
         try {
             DB::beginTransaction();
-
             $profileDataForCreate = collect($validatedData)->except([
                 'current_section_id', 'data_inizio_assegnazione', 'note_assegnazione', 'activity_ids'
             ])->toArray();
@@ -193,7 +193,7 @@ public function create()
                     'profile_id' => $profile->id,
                     'data_inizio_periodo' => $validatedData['data_inizio_assegnazione'],
                     'data_fine_periodo' => null,
-                    'tipo_ingresso' => 'Assunzione/Primo Impiego', // O un valore più appropriato
+                    'tipo_ingresso' => 'Assunzione/Primo Impiego',
                     'note_periodo' => $validatedData['note_assegnazione'] ?? 'Periodo di impiego iniziale.',
                 ]);
                 $profile->sectionHistory()->attach($validatedData['current_section_id'], [
@@ -203,15 +203,12 @@ public function create()
                 ]);
             }
 
-            // Associa le attività e sincronizza i DPI derivati
-            if (array_key_exists('activity_ids', $validatedData)) { // Controlla se la chiave esiste
-                $profile->activities()->sync($validatedData['activity_ids'] ?? []); // Usa ?? [] per passare un array vuoto se activity_ids è null
-                $this->syncProfilePpes($profile);
+            if (array_key_exists('activity_ids', $validatedData)) {
+                $profile->activities()->sync($validatedData['activity_ids'] ?? []);
             } else {
-                // Se 'activity_ids' non è proprio presente nella request, assicurati di rimuovere tutte le attività e i DPI
                 $profile->activities()->detach();
-                $this->syncProfilePpes($profile); // Sincronizzerà una lista vuota di DPI
             }
+            // NESSUNA chiamata a syncProfilePpes per assegnazione automatica DPI
 
             DB::commit();
             return redirect()->route('profiles.index')->with('success', 'Profilo creato con successo.');
@@ -221,32 +218,271 @@ public function create()
             return back()->withInput()->with('error', 'Errore durante la creazione del profilo: ' . $e->getMessage());
         }
     }
-    
-    
-    /**
-     * Display the specified resource.
-     */
-   public function show(Profile $profile)
-    {
-        $profile->load([
-            'employmentPeriods', 
-            'sectionHistory.office', 
-            'activities.ppes', 
-            'activities.healthSurveillances', 
-            'healthCheckRecords.healthSurveillance', 
-            'safetyCourses.pivot',
-            'assignedPpes',
-        ]);
-        $currentSectionAssignment = $profile->getCurrentSectionAssignment(); 
-        $currentEmploymentPeriod = $profile->getCurrentEmploymentPeriod();
-        $incarichiDisponibili = Profile::INCARICHI_DISPONIBILI; // Per visualizzare il nome corretto dell'incarico
 
-        return view('profiles.show', compact('profile', 'currentSectionAssignment', 'currentEmploymentPeriod', 'incarichiDisponibili'));
+    public function show(Profile $profile)
+    {
+        Log::debug("--- Inizio AnagraficaController@show per Profilo ID: {$profile->id} ---");
+
+        $profile->load([
+            'employmentPeriods',
+            'sectionHistory.office',
+            'activities' => function ($query) {
+                // Carica le attività e, per ciascuna, le sue relazioni necessarie
+                $query->with(['ppes', 'safetyCourses', 'healthSurveillances']);
+            },
+            'healthCheckRecords.healthSurveillance', // TUTTE le visite mediche del profilo con il tipo di sorveglianza
+            'safetyCourses',      // TUTTI i corsi frequentati dal profilo con dati pivot (da profile_safety_course)
+            'assignedPpes'              // TUTTI i DPI assegnati manualmente al profilo con dati pivot (da profile_ppe)
+        ]);
+
+        $currentSectionAssignment = $profile->getCurrentSectionAssignment();
+        $currentEmploymentPeriod = $profile->getCurrentEmploymentPeriod();
+        $incarichiDisponibili = Profile::INCARICHI_DISPONIBILI; // Usato per il display name dell'incarico
+
+        // --- Logica per DPI Richiesti dalle Attività vs. Assegnati Manualmente ---
+        $tempRequiredPpes = [];
+        $activityBasedRequiredPpeIds = []; // ID dei DPI richiesti dalle attività
+
+        if ($profile->relationLoaded('activities') && $profile->activities->isNotEmpty()) {
+            foreach ($profile->activities as $activity) {
+                // $activity->pivot dovrebbe esistere qui grazie al caricamento della relazione 'activities' dal profilo
+                if (empty($activity->pivot) || !isset($activity->pivot->created_at)) {
+                     Log::warning("Dati pivot 'created_at' mancanti per activity ID: {$activity->id} su profile ID: {$profile->id} per DPI.");
+                    // Fallback se la data di assegnazione dell'attività non è disponibile
+                    $activityAssignedDateToProfile = $currentEmploymentPeriod ? Carbon::parse($currentEmploymentPeriod->data_inizio_periodo) : Carbon::now()->startOfDay();
+                } else {
+                    $activityAssignedDateToProfile = Carbon::parse($activity->pivot->created_at);
+                }
+
+                if ($activity->relationLoaded('ppes') && $activity->ppes->isNotEmpty()) {
+                    foreach ($activity->ppes as $ppe) {
+                        $activityBasedRequiredPpeIds[] = $ppe->id;
+                        if (!isset($tempRequiredPpes[$ppe->id])) {
+                            $tempRequiredPpes[$ppe->id] = [
+                                'id' => $ppe->id,
+                                'name' => $ppe->name,
+                                'ppe_object' => $ppe,
+                                'causale_activities' => collect([$activity->name]),
+                                'min_da_quando_obj' => $activityAssignedDateToProfile,
+                            ];
+                        } else {
+                            $tempRequiredPpes[$ppe->id]['causale_activities']->push($activity->name);
+                            if ($activityAssignedDateToProfile->lt($tempRequiredPpes[$ppe->id]['min_da_quando_obj'])) {
+                                $tempRequiredPpes[$ppe->id]['min_da_quando_obj'] = $activityAssignedDateToProfile;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        $activityBasedRequiredPpeIds = array_unique($activityBasedRequiredPpeIds);
+
+        $requiredPpesDisplayData = collect();
+        if (!empty($tempRequiredPpes)) {
+            foreach ($tempRequiredPpes as $ppeId => $data) {
+                $actualAssignment = $profile->assignedPpes->firstWhere('id', $ppeId); // Cerca tra i DPI assegnati manualmente
+                $isAssigned = (bool)$actualAssignment;
+                $assignmentReason = null;
+                $assignmentTypeFromPivot = null;
+                $assignedDate = null;
+
+                if ($isAssigned && $actualAssignment->pivot) {
+                    $assignmentReason = $actualAssignment->pivot->reason;
+                    $assignmentTypeFromPivot = $actualAssignment->pivot->assignment_type;
+                    $assignedDate = Carbon::parse($actualAssignment->pivot->updated_at ?? $actualAssignment->pivot->created_at)->format('d/m/Y');
+                }
+
+                $requiredPpesDisplayData->push([
+                    'id' => $data['id'],
+                    'name' => $data['name'],
+                    'causale' => 'Attività: ' . $data['causale_activities']->unique()->implode(', '),
+                    'da_quando' => $data['min_da_quando_obj']->format('d/m/Y'),
+                    'is_assigned' => $isAssigned,
+                    'assignment_reason' => $assignmentReason,
+                    'assignment_type' => $assignmentTypeFromPivot,
+                    'assigned_date' => $assignedDate,
+                    'needs_attention' => !$isAssigned, // Necessita attenzione se richiesto ma non assegnato manualmente
+                    'ppe_object' => $data['ppe_object']
+                ]);
+            }
+        }
+        $requiredPpesDisplayData = $requiredPpesDisplayData->sortBy('name')->values();
+        Log::debug("DPI Richiesti dalle Attività (con stato assegnazione):", $requiredPpesDisplayData->toArray());
+
+        $otherManuallyAssignedPpesData = collect();
+        if ($profile->relationLoaded('assignedPpes')) {
+            foreach ($profile->assignedPpes as $assignedPpe) {
+                if (!in_array($assignedPpe->id, $activityBasedRequiredPpeIds)) {
+                    $otherManuallyAssignedPpesData->push([
+                        'id' => $assignedPpe->id,
+                        'name' => $assignedPpe->name,
+                        'reason' => $assignedPpe->pivot->reason ?? null, // Assicura che reason esista
+                        'assignment_type' => $assignedPpe->pivot->assignment_type ?? 'manual', // Dovrebbe essere manuale
+                        'assigned_date' => Carbon::parse($assignedPpe->pivot->updated_at ?? $assignedPpe->pivot->created_at)->format('d/m/Y'),
+                        'ppe_object' => $assignedPpe
+                    ]);
+                }
+            }
+        }
+        $otherManuallyAssignedPpesData = $otherManuallyAssignedPpesData->sortBy('name')->values();
+        Log::debug("Altri DPI Assegnati Manualmente:", $otherManuallyAssignedPpesData->toArray());
+        // --- Fine Logica DPI ---
+
+        // --- Logica per Corsi di Sicurezza ---
+        $tempRequiredCourses = [];
+        $activityBasedRequiredCourseIds = [];
+        if ($profile->relationLoaded('activities') && $profile->activities->isNotEmpty()) {
+            foreach ($profile->activities as $activity) {
+                 if (empty($activity->pivot) || !isset($activity->pivot->created_at)) {
+                    Log::warning("Dati pivot 'created_at' mancanti per activity ID: {$activity->id} su profile ID: {$profile->id} per corsi.");
+                    $activityAssignedDateToProfile = $currentEmploymentPeriod ? Carbon::parse($currentEmploymentPeriod->data_inizio_periodo) : Carbon::now()->startOfDay();
+                } else {
+                    $activityAssignedDateToProfile = Carbon::parse($activity->pivot->created_at);
+                }
+
+                if ($activity->relationLoaded('safetyCourses') && $activity->safetyCourses->isNotEmpty()) {
+                    foreach ($activity->safetyCourses as $course) {
+                        $activityBasedRequiredCourseIds[] = $course->id;
+                        if (!isset($tempRequiredCourses[$course->id])) {
+                            $tempRequiredCourses[$course->id] = ['id' => $course->id, 'name' => $course->name, 'course_object' => $course, 'causale_activities' => collect([$activity->name]), 'min_da_quando_obj' => $activityAssignedDateToProfile];
+                        } else {
+                            $tempRequiredCourses[$course->id]['causale_activities']->push($activity->name);
+                            if ($activityAssignedDateToProfile->lt($tempRequiredCourses[$course->id]['min_da_quando_obj'])) {
+                                $tempRequiredCourses[$course->id]['min_da_quando_obj'] = $activityAssignedDateToProfile;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        $activityBasedRequiredCourseIds = array_unique($activityBasedRequiredCourseIds);
+
+        $requiredCoursesDisplayData = collect();
+        if (!empty($tempRequiredCourses)) {
+            foreach ($tempRequiredCourses as $courseId => $data) {
+                $latestAttendance = null;
+                $attendancePivotId = null;
+                if($profile->relationLoaded('safetyCourses')) {
+                    $latestAttendance = $profile->safetyCourses->where('id', $courseId)->sortByDesc('pivot.attended_date')->first();
+                }
+                $attendedDate = null; $expirationDate = null; $isAttended = false; $isExpired = false; $pivotNotes = null; $pivotCertificate = null;
+
+                if ($latestAttendance && isset($latestAttendance->pivot) && $latestAttendance->pivot->attended_date) {
+                    $isAttended = true;
+                    $attendancePivotId = $latestAttendance->pivot->id; // ID del record profile_safety_course
+                    $attendedDateCarbon = Carbon::parse($latestAttendance->pivot->attended_date);
+                    $attendedDate = $attendedDateCarbon->format('d/m/Y');
+                    $pivotNotes = $latestAttendance->pivot->notes;
+                    $pivotCertificate = $latestAttendance->pivot->certificate_number;
+                    if ($data['course_object']->duration_years && $data['course_object']->duration_years > 0) {
+                        $expirationDateCarbon = $attendedDateCarbon->copy()->addYears($data['course_object']->duration_years);
+                        $expirationDate = $expirationDateCarbon->format('d/m/Y');
+                        $isExpired = $expirationDateCarbon->isPast();
+                    }
+                }
+                $requiredCoursesDisplayData->push([
+                    'id' => $data['id'], 'name' => $data['name'],
+                    'causale' => 'Attività: ' . $data['causale_activities']->unique()->implode(', '),
+                    'da_quando' => $data['min_da_quando_obj']->format('d/m/Y'),
+                    'attended_date' => $attendedDate, 'expiration_date' => $expirationDate,
+                    'is_attended' => $isAttended, 'is_expired' => $isExpired,
+                    'needs_attention' => !$isAttended || ($isAttended && $isExpired),
+                    'notes' => $pivotNotes, 'certificate_number' => $pivotCertificate,
+                    'course_object' => $data['course_object'],
+                    'attendance_pivot_id' => $attendancePivotId
+                ]);
+            }
+        }
+        $requiredCoursesDisplayData = $requiredCoursesDisplayData->sortBy('name')->values();
+
+        $otherAttendedCoursesData = collect();
+        if ($profile->relationLoaded('safetyCourses')) {
+            foreach ($profile->safetyCourses as $attendedCourse) {
+                if (!in_array($attendedCourse->id, $activityBasedRequiredCourseIds)) {
+                    $attendedDateCarbon = Carbon::parse($attendedCourse->pivot->attended_date); $expirationDate = null; $isExpired = false;
+                    if ($attendedCourse->duration_years && $attendedCourse->duration_years > 0) { $expirationDateCarbon = $attendedDateCarbon->copy()->addYears($attendedCourse->duration_years); $expirationDate = $expirationDateCarbon->format('d/m/Y'); $isExpired = $expirationDateCarbon->isPast(); }
+                    $otherAttendedCoursesData->push([
+                        'id' => $attendedCourse->id, 'name' => $attendedCourse->name,
+                        'attended_date' => $attendedDateCarbon->format('d/m/Y'),
+                        'expiration_date' => $expirationDate,
+                        'notes' => $attendedCourse->pivot->notes,
+                        'certificate_number' => $attendedCourse->pivot->certificate_number,
+                        'is_expired' => $isExpired, 'course_object' => $attendedCourse,
+                        'attendance_pivot_id' => $attendedCourse->pivot->id // ID del record profile_safety_course
+                    ]);
+                }
+            }
+        }
+        $otherAttendedCoursesData = $otherAttendedCoursesData->sortBy('name')->values();
+        Log::debug("Dati finali per i corsi richiesti dalle attività:", $requiredCoursesDisplayData->toArray());
+        Log::debug("Dati finali per ALTRI corsi frequentati:", $otherAttendedCoursesData->toArray());
+        // --- Fine Logica Corsi ---
+
+
+        // --- Logica per Sorveglianze Sanitarie ---
+        $tempRequiredHS = []; $activityBasedRequiredHSIds = [];
+        if ($profile->relationLoaded('activities') && $profile->activities->isNotEmpty()) {
+            foreach ($profile->activities as $activity) {
+                if (empty($activity->pivot) || !isset($activity->pivot->created_at)) {
+                    Log::warning("Dati pivot 'created_at' mancanti per activity ID: {$activity->id} su profile ID: {$profile->id} per sorveglianze.");
+                    $activityAssignedDateToProfile = $currentEmploymentPeriod ? Carbon::parse($currentEmploymentPeriod->data_inizio_periodo) : Carbon::now()->startOfDay();
+                } else {
+                    $activityAssignedDateToProfile = Carbon::parse($activity->pivot->created_at);
+                }
+
+                if ($activity->relationLoaded('healthSurveillances') && $activity->healthSurveillances->isNotEmpty()) {
+                    foreach ($activity->healthSurveillances as $hs) {
+                        $activityBasedRequiredHSIds[] = $hs->id;
+                        if (!isset($tempRequiredHS[$hs->id])) { $tempRequiredHS[$hs->id] = ['id' => $hs->id, 'name' => $hs->name, 'hs_object' => $hs, 'causale_activities' => collect([$activity->name]), 'min_da_quando_obj' => $activityAssignedDateToProfile]; }
+                        else { $tempRequiredHS[$hs->id]['causale_activities']->push($activity->name); if ($activityAssignedDateToProfile->lt($tempRequiredHS[$hs->id]['min_da_quando_obj'])) { $tempRequiredHS[$hs->id]['min_da_quando_obj'] = $activityAssignedDateToProfile; } }
+                    }
+                }
+            }
+        }
+        $activityBasedRequiredHSIds = array_unique($activityBasedRequiredHSIds);
+
+        $requiredHealthSurveillancesDisplayData = collect();
+        if (!empty($tempRequiredHS)) {
+            foreach ($tempRequiredHS as $hsId => $data) {
+                $latestCheckUpRecord = null; $recordId = null;
+                if($profile->relationLoaded('healthCheckRecords')){ $latestCheckUpRecord = $profile->healthCheckRecords->where('health_surveillance_id', $hsId)->sortByDesc('check_up_date')->first(); }
+                $lastCheckUpDate = null; $expirationDate = null; $outcome = null; $notes = null; $hasRecord = false; $isExpired = false;
+                if ($latestCheckUpRecord) {
+                    $hasRecord = true; $recordId = $latestCheckUpRecord->id;
+                    $lastCheckUpDateCarbon = Carbon::parse($latestCheckUpRecord->check_up_date); $lastCheckUpDate = $lastCheckUpDateCarbon->format('d/m/Y');
+                    $outcome = $latestCheckUpRecord->outcome; $notes = $latestCheckUpRecord->notes;
+                    if ($latestCheckUpRecord->expiration_date) { $expirationDateCarbon = Carbon::parse($latestCheckUpRecord->expiration_date); $expirationDate = $expirationDateCarbon->format('d/m/Y'); $isExpired = $expirationDateCarbon->isPast(); }
+                }
+                $requiredHealthSurveillancesDisplayData->push(['id' => $data['id'], 'name' => $data['name'], 'causale' => 'Attività: ' . $data['causale_activities']->unique()->implode(', '), 'da_quando' => $data['min_da_quando_obj']->format('d/m/Y'), 'last_check_up_date' => $lastCheckUpDate, 'expiration_date' => $expirationDate, 'outcome' => $outcome, 'notes' => $notes, 'has_record' => $hasRecord, 'is_expired' => $isExpired, 'needs_attention' => !$hasRecord || ($hasRecord && $isExpired), 'hs_object' => $data['hs_object'], 'record_id' => $recordId]);
+            }
+        }
+        $requiredHealthSurveillancesDisplayData = $requiredHealthSurveillancesDisplayData->sortBy('name')->values();
+
+        $otherHealthCheckRecordsData = collect();
+        if ($profile->relationLoaded('healthCheckRecords')) {
+            foreach ($profile->healthCheckRecords as $record) {
+                if (!in_array($record->health_surveillance_id, $activityBasedRequiredHSIds)) {
+                    $lastCheckUpDateCarbon = Carbon::parse($record->check_up_date); $expirationDate = null; $isExpired = false;
+                    if ($record->expiration_date) { $expirationDateCarbon = Carbon::parse($record->expiration_date); $expirationDate = $expirationDateCarbon->format('d/m/Y'); $isExpired = $expirationDateCarbon->isPast(); }
+                    $otherHealthCheckRecordsData->push(['id' => $record->id, 'hs_name' => $record->healthSurveillance ? $record->healthSurveillance->name : 'Tipo Sorveglianza Sconosciuto', 'hs_object' => $record->healthSurveillance, 'last_check_up_date' => $lastCheckUpDateCarbon->format('d/m/Y'), 'expiration_date' => $expirationDate, 'outcome' => $record->outcome, 'notes' => $record->notes, 'is_expired' => $isExpired]);
+                }
+            }
+        }
+        $otherHealthCheckRecordsData = $otherHealthCheckRecordsData->sortBy('hs_name')->values();
+        Log::debug("Dati finali per sorveglianze richieste dalle attività:", $requiredHealthSurveillancesDisplayData->toArray());
+        Log::debug("Dati finali per ALTRE sorveglianze registrate:", $otherHealthCheckRecordsData->toArray());
+        // --- Fine Logica Sorveglianze ---
+
+        Log::debug("--- Fine AnagraficaController@show per Profilo ID: {$profile->id} ---");
+        return view('profiles.show', compact(
+            'profile', 'currentSectionAssignment', 'currentEmploymentPeriod', 'incarichiDisponibili',
+            'requiredPpesDisplayData', 'otherManuallyAssignedPpesData',
+            'requiredCoursesDisplayData', 'otherAttendedCoursesData',
+            'requiredHealthSurveillancesDisplayData', 'otherHealthCheckRecordsData'
+        ));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
+
     public function edit(Profile $profile)
     {
         $sections = Section::with('office')->orderBy('nome')->get();
@@ -259,123 +495,134 @@ public function create()
         $activities = Activity::orderBy('name')->get();
         $profileActivityIds = $profile->activities()->pluck('activities.id')->toArray();
         
-        $incarichiDisponibili = Profile::INCARICHI_DISPONIBILI; // Valori per il dropdown incarico
+        $incarichiDisponibili = Profile::INCARICHI_DISPONIBILI;
 
         return view('profiles.edit', compact(
-            'profile',
-            'sections',
-            'current_section_id',
-            'latestEmploymentPeriodStartDate',
-            'activities',
-            'profileActivityIds',
-            'incarichiDisponibili' // Passa gli incarichi alla vista
+            'profile', 'sections', 'current_section_id', 'latestEmploymentPeriodStartDate',
+            'activities', 'profileActivityIds', 'incarichiDisponibili'
         ));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Profile $profile)
+    public function editPpes(Profile $profile)
     {
-        $incarichiRule = Rule::in(array_keys(Profile::INCARICHI_DISPONIBILI));
+        $allPpes = PPE::orderBy('name')->get();
+        // Carica i DPI attualmente assegnati MANUALMENTE al profilo con i dati pivot
+        $profile->load(['assignedPpes', 'activities.ppes']);
 
-        $validatedData = $request->validate([
-            'grado' => 'nullable|string|max:50',
-            'nome' => 'required|string|max:255',
-            'cognome' => 'required|string|max:255',
-            'sesso' => 'nullable|in:M,F,Altro',
-            'luogo_nascita_citta' => 'nullable|string|max:255',
-            'luogo_nascita_provincia' => 'nullable|string|max:2',
-            'luogo_nascita_cap' => 'nullable|string|max:5',
-            'luogo_nascita_nazione' => 'nullable|string|max:255',
-            'data_nascita' => 'nullable|date_format:Y-m-d',
-            'email' => ['nullable', 'email', 'max:255', Rule::unique('profiles')->ignore($profile->id)],
-            'cellulare' => ['nullable', 'string', 'max:20', Rule::unique('profiles')->ignore($profile->id)],
-            'cf' => ['nullable', 'string', 'max:16', Rule::unique('profiles')->ignore($profile->id)],
-            'incarico' => ['nullable', 'string', $incarichiRule],
-            'mansione' => 'nullable|string|max:255', // Aggiunta max lunghezza per mansione se desiderato
-            'residenza_via' => 'nullable|string|max:255',
-            'residenza_citta' => 'nullable|string|max:255',
-            'residenza_provincia' => 'nullable|string|max:2',
-            'residenza_cap' => 'nullable|string|max:5',
-            'residenza_nazione' => 'nullable|string|max:255',
-            'current_section_id' => 'nullable|exists:sections,id',
-            'activity_ids' => 'nullable|array',
-            'activity_ids.*' => 'exists:activities,id',
+        // 1. Determina i DPI richiesti dalle attività del profilo
+        $activityRequiredPpeDetails = []; // [ppe_id => ['names' => [activity_name_1, ...]]]
+        if ($profile->relationLoaded('activities')) {
+            foreach ($profile->activities as $activity) {
+                if ($activity->relationLoaded('ppes')) {
+                    foreach ($activity->ppes as $ppe) {
+                        if (!isset($activityRequiredPpeDetails[$ppe->id])) {
+                            $activityRequiredPpeDetails[$ppe->id] = ['names' => collect()];
+                        }
+                        $activityRequiredPpeDetails[$ppe->id]['names']->push($activity->name);
+                    }
+                }
+            }
+        }
+
+        // 2. Prepara i dati per ogni DPI da mostrare nella vista
+        $ppesData = $allPpes->map(function ($ppe) use ($profile, $activityRequiredPpeDetails) {
+            $manualAssignment = $profile->assignedPpes->firstWhere('id', $ppe->id); // Cerca tra i DPI assegnati manualmente
+            
+            $isManuallyAssigned = (bool)$manualAssignment;
+            $lastManuallyAssignedDate = null;
+            $currentManualReason = null;
+
+            if ($isManuallyAssigned) {
+                // Usa updated_at come data di "ultima modifica/assegnazione" per quel record pivot
+                $lastManuallyAssignedDate = Carbon::parse($manualAssignment->pivot->updated_at)->format('d/m/Y');
+                $currentManualReason = $manualAssignment->pivot->reason;
+            }
+
+            $isRequiredByActivity = isset($activityRequiredPpeDetails[$ppe->id]);
+            $requiringActivitiesString = null;
+            if ($isRequiredByActivity) {
+                $requiringActivitiesString = 'Richiesto da: ' . $activityRequiredPpeDetails[$ppe->id]['names']->unique()->implode(', ');
+            }
+
+            return [
+                'id' => $ppe->id,
+                'name' => $ppe->name,
+                'description' => $ppe->description,
+                'is_manually_assigned' => $isManuallyAssigned,
+                'last_manually_assigned_date' => $lastManuallyAssignedDate,
+                'current_manual_reason' => $currentManualReason,
+                'is_required_by_activity' => $isRequiredByActivity,
+                'requiring_activities_string' => $requiringActivitiesString,
+                // La riga va in rosso se è richiesto da un'attività MA non è attualmente assegnato manualmente
+                'highlight_as_missing_requirement' => $isRequiredByActivity && !$isManuallyAssigned,
+            ];
+        });
+
+        return view('profiles.edit_ppes', compact('profile', 'ppesData'));
+    }
+
+    /**
+     * Update custom PPE assignments for a profile.
+     * La tabella profile_ppe conterrà solo assegnazioni manuali.
+     */
+    public function updatePpes(Request $request, Profile $profile)
+    {
+        // Il form invierà:
+        // - 'assigned_ppes[]' con gli ID dei DPI selezionati (checkbox spuntati)
+        // - 'reasons[PPE_ID]' con la motivazione per ciascun DPI
+        $validated = $request->validate([
+            'assigned_ppes' => 'nullable|array',
+            'assigned_ppes.*' => 'required|exists:ppes,id', // Gli ID dei DPI selezionati devono esistere
+            'reasons' => 'nullable|array',
+            'reasons.*' => 'nullable|string|max:255', // Le motivazioni sono stringhe
         ]);
 
         try {
             DB::beginTransaction();
 
-            $profileDataForUpdate = collect($validatedData)->except(['current_section_id', 'activity_ids'])->toArray();
-            $profile->update($profileDataForUpdate);
-            
-            // Gestione del cambio di sezione
-            $nuova_section_id_richiesta = $validatedData['current_section_id'] ?? null;
-            $attualeAssegnazioneAttiva = $profile->sectionHistory()->wherePivotNull('data_fine_assegnazione')->first();
-            $attuale_section_id_attiva = $attualeAssegnazioneAttiva ? $attualeAssegnazioneAttiva->id : null;
+            $syncData = []; // Dati da sincronizzare per la tabella profile_ppe
 
-            if ($profile->isCurrentlyEmployed()) {
-                if ($nuova_section_id_richiesta && $nuova_section_id_richiesta != $attuale_section_id_attiva) {
-                    if ($attuale_section_id_attiva) {
-                        $profile->sectionHistory()
-                               ->updateExistingPivot($attuale_section_id_attiva, [
-                                   'data_fine_assegnazione' => Carbon::today()->subDay()
-                               ], false);
-                    }
-                    $profile->sectionHistory()->attach($nuova_section_id_richiesta, [
-                        'data_inizio_assegnazione' => Carbon::today(),
-                        'data_fine_assegnazione' => null,
-                        'note' => 'Spostamento in altra sezione',
-                    ]);
-                } elseif (is_null($nuova_section_id_richiesta) && $attuale_section_id_attiva) {
-                     $profile->sectionHistory()
-                               ->updateExistingPivot($attuale_section_id_attiva, [
-                                   'data_fine_assegnazione' => Carbon::today()
-                               ], false);
+            if (!empty($validated['assigned_ppes'])) {
+                foreach ($validated['assigned_ppes'] as $ppeId) {
+                    $syncData[$ppeId] = [
+                        'assignment_type' => 'manual', // Tutte le assegnazioni fatte da qui sono manuali
+                        'reason' => $request->input("reasons.{$ppeId}") ?? 'Assegnazione manuale',
+                    ];
                 }
             }
 
-            // Sincronizza le attività e i DPI derivati
-            // È importante controllare se 'activity_ids' è presente nella request,
-            // perché se non lo è (es. nessun checkbox inviato), sync([]) rimuoverebbe tutte le associazioni.
-            if ($request->has('activity_ids')) {
-                $profile->activities()->sync($validatedData['activity_ids'] ?? []);
-            } else {
-                // Se il campo activity_ids non è presente affatto nella richiesta (diverso da un array vuoto)
-                // potresti voler staccare tutte le attività
-                 $profile->activities()->detach();
-            }
-            $this->syncProfilePpes($profile); // Sincronizza i DPI in base alle attività (ora aggiornate)
-
+            // sync() gestirà l'aggiunta, l'aggiornamento (della reason) e la rimozione.
+            // Tutti i record in profile_ppe per questo profilo saranno di tipo 'manual'.
+            $profile->assignedPpes()->sync($syncData);
 
             DB::commit();
-            return redirect()->route('profiles.show', $profile->id)->with('success', 'Profilo aggiornato con successo.');
+            return redirect()->route('profiles.show', $profile->id)->with('success', 'Assegnazioni DPI manuali aggiornate con successo.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Errore aggiornamento profilo: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
-            return back()->withInput()->with('error', 'Errore durante l\'aggiornamento del profilo: ' . $e->getMessage());
+            Log::error('Errore aggiornamento DPI manuali profilo ID ' . $profile->id . ': ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
+            return back()->withInput()->with('error', 'Errore durante l\'aggiornamento delle assegnazioni DPI: ' . $e->getMessage());
         }
     }
 
-    // ... (metodo destroy invariato)
     public function destroy(Profile $profile)
     {
         try {
             DB::beginTransaction();
-            
             $currentEmployment = $profile->getCurrentEmploymentPeriod();
             if ($currentEmployment) {
                 $currentEmployment->update(['data_fine_periodo' => Carbon::today()]);
             }
-
             $currentSectionAssignment = $profile->getCurrentSectionAssignment();
             if ($currentSectionAssignment) {
                  $profile->sectionHistory()
-                           ->updateExistingPivot($currentSectionAssignment->id, [
-                               'data_fine_assegnazione' => Carbon::today()
-                           ], false);
+                           ->updateExistingPivot($currentSectionAssignment->id, ['data_fine_assegnazione' => Carbon::today()], false);
             }
+            // Stacca relazioni many-to-many prima del soft delete per pulizia se non usi cascade on delete a livello DB
+            $profile->activities()->detach();
+            $profile->assignedPpes()->detach(); // DPI manuali
+            // Le frequenze dei corsi (profile_safety_course) potrebbero avere cascade, altrimenti $profile->safetyCourses()->detach();
+            // Le registrazioni sanitarie (health_check_records) potrebbero avere cascade, altrimenti $profile->healthCheckRecords()->delete(); (se sono hasMany)
+
 
             $profile->delete();
             DB::commit();
@@ -385,177 +632,5 @@ public function create()
             Log::error('Errore eliminazione profilo: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
             return redirect()->route('profiles.index')->with('error', 'Errore durante l\'eliminazione del profilo: ' . $e->getMessage());
         }
-    }
-    
-    /**
-     * Show the form for editing custom PPE assignments for a profile.
-     */
-    public function editPpes(Profile $profile)
-    {
-        $allPpes = PPE::orderBy('name')->get();
-        $profile->load('assignedPpes'); // Carica i DPI attualmente assegnati con i dati pivot
-
-        $ppesData = $allPpes->map(function ($ppe) use ($profile) {
-            $assignment = $profile->assignedPpes->firstWhere('id', $ppe->id);
-            return [
-                'id' => $ppe->id,
-                'name' => $ppe->name,
-                'description' => $ppe->description,
-                'is_assigned' => (bool)$assignment,
-                'assignment_type' => $assignment ? $assignment->pivot->assignment_type : null,
-                'reason' => $assignment ? $assignment->pivot->reason : null,
-                'is_readonly' => $assignment && $assignment->pivot->assignment_type === 'automatic',
-            ];
-        });
-
-        return view('profiles.edit_ppes', compact('profile', 'ppesData'));
-    }
-
-    /**
-     * Update custom PPE assignments for a profile.
-     */
-    public function updatePpes(Request $request, Profile $profile)
-    {
-        // Validazione generale per l'array 'ppes'
-        $request->validate([
-            'ppes' => 'nullable|array',
-            // La validazione più specifica per 'id' e 'reason' avverrà nel loop
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            $submittedPpeInputs = $request->input('ppes', []);
-            $manualPpeSyncData = []; // Dati da sincronizzare per i DPI manuali
-
-            if (!empty($submittedPpeInputs)) {
-                foreach ($submittedPpeInputs as $index => $ppeInput) {
-                    // Controlla se l'ID del PPE è stato inviato (cioè il checkbox era spuntato E non disabilitato)
-                    // La vista dovrebbe inviare 'ppes[INDEX][id]' solo se il checkbox è spuntato e attivo
-                    if (isset($ppeInput['id'])) {
-                        // Valida questo specifico PPE. L'ID deve esistere. La reason è opzionale.
-                        $validator = Validator::make($ppeInput, [
-                            'id' => 'required|exists:ppes,id',
-                            'reason' => 'nullable|string|max:255',
-                        ]);
-
-                        if ($validator->fails()) {
-                            DB::rollBack();
-                            return back()->withErrors($validator, "ppes_{$index}")->withInput();
-                        }
-                        
-                        $validatedPpeData = $validator->validated();
-
-                        // Aggiungi ai dati da sincronizzare solo se è un'assegnazione manuale
-                        // (gli automatici non dovrebbero essere gestiti da questo form)
-                        $currentAssignment = $profile->assignedPpes()->where('ppe_id', $validatedPpeData['id'])->first();
-                        
-                        // Se il DPI non è attualmente assegnato, o se è assegnato come manuale,
-                        // allora lo consideriamo per la sincronizzazione manuale.
-                        if (!$currentAssignment || $currentAssignment->pivot->assignment_type === 'manual') {
-                             $manualPpeSyncData[$validatedPpeData['id']] = [
-                                'assignment_type' => 'manual',
-                                'reason' => $validatedPpeData['reason'] ?? 'Assegnazione manuale',
-                            ];
-                        }
-                        // Se $currentAssignment esiste ed è 'automatic', non facciamo nulla qui,
-                        // perché i DPI automatici non dovrebbero essere modificati da questo form.
-                        // Saranno gestiti da syncProfilePpes.
-                    }
-                }
-            }
-
-            // 1. Ottieni gli ID di tutti i DPI che ERANO manuali PRIMA di questo aggiornamento
-            $previouslyManualPpeIds = $profile->assignedPpes()
-                                           ->wherePivot('assignment_type', 'manual')
-                                           ->pluck('ppes.id') // Pluck direttamente l'ID del PPE
-                                           ->toArray();
-
-            // 2. Ottieni gli ID dei DPI che l'utente VUOLE siano manuali ORA (quelli spuntati nel form e non automatici)
-            $currentlySelectedManualPpeIds = array_keys($manualPpeSyncData);
-
-            // 3. DPI da staccare: quelli che erano manuali ma non sono più selezionati come manuali
-            $ppesToDetach = array_diff($previouslyManualPpeIds, $currentlySelectedManualPpeIds);
-            if (!empty($ppesToDetach)) {
-                $profile->assignedPpes()->wherePivot('assignment_type', 'manual')->detach($ppesToDetach);
-            }
-
-            // 4. DPI da attaccare/aggiornare: quelli selezionati come manuali
-            // Usiamo syncWithoutDetaching per non interferire con i DPI automatici esistenti
-            // e per aggiornare 'reason' se il DPI manuale era già presente.
-            // Tuttavia, dato che abbiamo già staccato i vecchi manuali non più selezionati,
-            // un semplice attach dei nuovi/aggiornati manualPpeSyncData è più pulito.
-            if (!empty($manualPpeSyncData)) {
-                 // Stacchiamo prima tutti i manuali e poi ri-attacchiamo quelli selezionati.
-                 // Questo gestisce sia aggiunte, rimozioni che aggiornamenti di 'reason'.
-                $profile->assignedPpes()->wherePivot('assignment_type', 'manual')->detach(); // Assicura pulizia
-                $profile->assignedPpes()->attach($manualPpeSyncData); // Attacca i nuovi con i dati corretti
-            }
-
-
-            // 5. Riesegui la sincronizzazione dei DPI automatici per assicurare coerenza.
-            // Questo è importante perché un'attività potrebbe essere stata aggiunta/rimossa al profilo
-            // in un altro contesto, o i DPI di un'attività potrebbero essere cambiati.
-            // Inoltre, se un DPI era manuale e ora un'attività lo richiede, diventerà automatico.
-            $this->syncProfilePpes($profile);
-
-            DB::commit();
-            return redirect()->route('profiles.show', $profile->id)->with('success', 'Assegnazioni DPI personalizzate aggiornate con successo.');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Errore aggiornamento DPI personalizzati profilo: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
-            return back()->withInput()->with('error', 'Errore durante l\'aggiornamento delle assegnazioni DPI: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Helper method to sync PPEs for a profile based on its activities.
-     */
-    private function syncProfilePpes(Profile $profile) // Rimosso il secondo parametro $isManualUpdateContext per semplicità
-    {
-        $profile->load('activities.ppes');
-
-        $automaticPpeData = []; // [ppe_id => ['assignment_type' => 'automatic', 'reason' => '...']]
-
-        foreach ($profile->activities as $activity) {
-            foreach ($activity->ppes as $ppe) {
-                $reasonPart = 'Attività: ' . $activity->name;
-                if (!isset($automaticPpeData[$ppe->id])) {
-                    $automaticPpeData[$ppe->id] = [
-                        'assignment_type' => 'automatic',
-                        'reason' => $reasonPart
-                    ];
-                } else {
-                    // Concatena nomi attività se non già presenti
-                    if (strpos($automaticPpeData[$ppe->id]['reason'], $activity->name) === false) {
-                        $automaticPpeData[$ppe->id]['reason'] .= ', ' . $activity->name;
-                    }
-                }
-            }
-        }
-
-        // Ottieni tutti i DPI attualmente assegnati al profilo con i loro dati pivot
-        $currentAssignments = $profile->assignedPpes()->withPivot('assignment_type', 'reason')->get()->keyBy('id');
-        $syncData = [];
-
-        // Prepara i dati per la sincronizzazione finale, dando priorità agli automatici
-        foreach ($automaticPpeData as $ppeId => $autoData) {
-            $syncData[$ppeId] = $autoData;
-        }
-
-        // Aggiungi i DPI manuali che non sono già coperti dagli automatici
-        foreach ($currentAssignments as $ppeId => $assignedPpe) {
-            if ($assignedPpe->pivot->assignment_type === 'manual' && !isset($syncData[$ppeId])) {
-                // Se era manuale e non è diventato automatico, lo manteniamo manuale
-                $syncData[$ppeId] = [
-                    'assignment_type' => 'manual',
-                    'reason' => $assignedPpe->pivot->reason
-                ];
-            }
-        }
-        
-        // Ora $syncData contiene lo stato finale desiderato per tutti i DPI (automatici e manuali non sovrascritti)
-        $profile->assignedPpes()->sync($syncData);
     }
 }
