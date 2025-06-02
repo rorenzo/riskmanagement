@@ -21,7 +21,7 @@ class ProfileSafetyCourseController extends Controller
         
         // Logica per arricchire l'elenco dei corsi con lo stato di frequenza/richiesta
         // Simile a quella usata in AnagraficaController@show per $requiredCoursesDisplayData
-        $profile->load(['activities.safetyCourses', 'safetyCourses.pivot']); // Carica attività->corsi e corsi frequentati
+        $profile->load(['activities.safetyCourses', 'safetyCourses']); // Carica attività->corsi e corsi frequentati
 
         $tempRequiredCourses = [];
         if ($profile->relationLoaded('activities') && $profile->activities->isNotEmpty()) {

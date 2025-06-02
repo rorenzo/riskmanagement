@@ -148,7 +148,7 @@
                                         @if($ppeData['is_assigned'])
                                         <span class="badge bg-success">{{ __('Assegnato') }}</span>
                                         @if(isset($ppeData['assignment_type']) && $ppeData['assignment_type'] === 'manual')
-                                        <span class="badge bg-warning text-dark ms-1">Manuale</span>
+                                        
                                         @elseif(isset($ppeData['assignment_type']))
                                         <span class="badge bg-secondary ms-1">{{ ucfirst($ppeData['assignment_type']) }}</span>
                                         @endif
