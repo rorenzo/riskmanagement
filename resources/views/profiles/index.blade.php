@@ -1,18 +1,18 @@
 {{-- resources/views/profiles/index.blade.php --}}
 <x-app-layout>
     <x-slot name="header">
-        
         <div class="d-flex justify-content-between align-items-center">
             <h2 class="h4 fw-semibold text-dark">
                 {{ __('Elenco Profili Anagrafici') }}
             </h2>
             <div>
+                @can('create profile') {{-- Proteggi il pulsante Aggiungi --}}
                 <a href="{{ route('profiles.create') }}" class="btn btn-success btn-sm">
                     <i class="fas fa-plus me-1"></i> {{ __('Aggiungi Anagrafica') }}
                 </a>
+                @endcan
             </div>
         </div>
-        
     </x-slot>
 
     <div class="py-5">
@@ -23,14 +23,11 @@
                 <div class="col-sm-4">
                    <select id="section-filter" class="form-select form-select-sm" aria-label="{{ __('Filtro per sezione') }}">
                         <option value="">{{ __('Tutte le Sezioni') }}</option>
-                        {{-- 
-                            Il controller ora passa una collection chiave-valore.
-                            $sectionName è il valore che verrà inviato dal filtro (es: "Sezione Innovazione").
-                            $displayText è il testo che l'utente visualizza (es: "Sezione Innovazione (Ufficio Tecnico)").
-                        --}}
-                        @foreach ($sectionsForFilter as $sectionName => $displayText)
-                            <option value="{{ $sectionName }}">{{ $displayText }}</option>
-                        @endforeach
+                        @if(isset($sectionsForFilter))
+                            @foreach ($sectionsForFilter as $sectionName => $displayText)
+                                <option value="{{ $sectionName }}">{{ $displayText }}</option>
+                            @endforeach
+                        @endif
                     </select>
                 </div>
             </div>
@@ -73,15 +70,30 @@
     </div>
 
     @push('styles')
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
         <style>
-            #profilesTable td, #profilesTable th {
-                vertical-align: middle;
-            }
+            #profilesTable td, #profilesTable th { vertical-align: middle; }
         </style>
     @endpush
 
     @push('scripts')
+        {{-- Rendi i permessi disponibili a JavaScript --}}
+        <script>
+            @php
+                // Prepara l'array dei permessi in PHP
+                $jsPermissions = $userPermissions ?? [
+                    'can_view_profile' => false,
+                    'can_edit_profile' => false,
+                    'can_delete_profile' => false,
+                ];
+            @endphp
+            const USER_PERMISSIONS = {
+                'can_view_profile': {{ $jsPermissions['can_view_profile'] ? 'true' : 'false' }},
+                'can_edit_profile': {{ $jsPermissions['can_edit_profile'] ? 'true' : 'false' }},
+                'can_delete_profile': {{ $jsPermissions['can_delete_profile'] ? 'true' : 'false' }}
+            };
+        </script>
+
         <script type="module">
             if (window.$ && typeof window.$.fn.DataTable === 'function') {
                 window.$(document).ready(function() {
@@ -108,35 +120,32 @@
                                 searchable: false,
                                 className: 'text-center',
                                 render: function (data, type, row) {
-                                    var showUrl = "{{ route('profiles.show', ':id') }}".replace(':id', data);
-                                    var editUrl = "{{ route('profiles.edit', ':id') }}".replace(':id', data);
-                                    var destroyUrl = "{{ route('profiles.destroy', ':id') }}".replace(':id', data); // CORRETTO QUI
+                                    let actionsHtml = '';
+                                    const showUrl = "{{ route('profiles.show', ':id') }}".replace(':id', data);
+                                    const editUrl = "{{ route('profiles.edit', ':id') }}".replace(':id', data);
+                                    const destroyUrl = "{{ route('profiles.destroy', ':id') }}".replace(':id', data);
                                     
-                                    var csrfToken = '@csrf'; // Non funziona direttamente così in stringa JS
-                                    var methodField = '@method("DELETE")'; // Non funziona direttamente così
-                                    
-                                    // È meglio costruire il form con i token Laravel direttamente o usare un approccio diverso per il delete
-                                    // Per semplicità e per mantenere la conferma, useremo un onsubmit nel form.
-                                    // Il token CSRF e il metodo DELETE devono essere gestiti correttamente nel form che viene sottomesso.
-                                    // La stringa qui sotto costruisce l'HTML per il form.
-                                    var formHtml = '<form action="' + destroyUrl +'" method="POST" class="d-inline ms-1" onsubmit="return confirm(\'{{ __('Sei sicuro di voler eliminare questo profilo?') }}\');">' +
-                                                   '{{ csrf_field() }}' + // Inserisce il token CSRF
-                                                   '{{ method_field("DELETE") }}' + // Specifica il metodo DELETE
-                                                   '<button type="submit" class="btn btn-sm btn-danger" title="{{ __('Elimina') }}">' +
-                                                   '<i class="fas fa-trash"></i>' +
-                                                   '</button></form>';
-
-                                    return '<a href="' + showUrl + '" class="btn btn-sm btn-info" title="{{ __('Visualizza Scheda') }}">' +
-                                           '<i class="fas fa-eye"></i></a>' +
-                                           '<a href="'+editUrl+'" class="btn btn-sm btn-primary ms-1" title="{{ __('Modifica') }}">'+
-                                           '<i class="fas fa-edit"></i></a>' +
-                                           formHtml;
+                                    if (USER_PERMISSIONS.can_view_profile) {
+                                        actionsHtml += `<a href="${showUrl}" class="btn btn-sm btn-info" title="{{ __('Visualizza Scheda') }}"><i class="fas fa-eye"></i></a>`;
+                                    }
+                                    if (USER_PERMISSIONS.can_edit_profile) {
+                                        actionsHtml += `<a href="${editUrl}" class="btn btn-sm btn-primary ms-1" title="{{ __('Modifica') }}"><i class="fas fa-edit"></i></a>`;
+                                    }
+                                    if (USER_PERMISSIONS.can_delete_profile) {
+                                        // Ottieni il token CSRF dal meta tag (assicurati che sia presente nel tuo layout principale)
+                                        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                                        
+                                        actionsHtml += ` <form action="${destroyUrl}" method="POST" class="d-inline" onsubmit="return confirm('{{ __('Sei sicuro di voler eliminare questo profilo?') }}');">
+                                                            <input type="hidden" name="_token" value="${csrfToken}">
+                                                            <input type="hidden" name="_method" value="DELETE">
+                                                            <button type="submit" class="btn btn-sm btn-danger ms-1" title="{{ __('Elimina') }}"><i class="fas fa-trash"></i></button>
+                                                        </form>`;
+                                    }
+                                    return actionsHtml || 'N/A'; // Mostra N/A se nessun permesso
                                 }
                             }
                         ],
-                        language: {
-                            url: "{{ asset('js/it-IT.json') }}", 
-                        },
+                        language: { url: "{{ asset('js/it-IT.json') }}" },
                         searching: true, 
                         ordering: true,  
                         order: [[2, 'asc'], [1, 'asc']], 
@@ -147,7 +156,7 @@
                     });
                 });
             } else {
-                console.error('ERRORE: jQuery o il plugin DataTables non sono stati caricati correttamente su window.$ prima di questo script. Controlla app.js e bootstrap.js.');
+                console.error('ERRORE: jQuery o il plugin DataTables non sono stati caricati correttamente.');
             }
         </script>
     @endpush

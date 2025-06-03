@@ -6,9 +6,11 @@
                 {{ __('Elenco Attività') }}
             </h2>
             <div>
+                @can ("create activity")
                 <a href="{{ route('activities.create') }}" class="btn btn-success btn-sm">
                     <i class="fas fa-plus me-1"></i> {{ __('Aggiungi Attività') }}
                 </a>
+                @endcan
             </div>
         </div>
     </x-slot>
@@ -44,7 +46,7 @@
                                                                                <td class="text-center">{{ $activity->safety_courses_count }}</td> {{-- NUOVA CELLA CON IL CONTEGGIO --}}
 
                                         <td class="text-center">
-    <a href="{{ route('activity.showProfiles', $activity->id) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('Vedi Profili con questa Attività') }}">
+    <a href="{{ route('activities.showProfiles', $activity->id) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('Vedi Profili con questa Attività') }}">
         <i class="fas fa-users"></i>
     </a>
 </td>
@@ -52,9 +54,12 @@
                                             <a href="{{ route('activities.show', $activity->id) }}" class="btn btn-sm btn-info" title="{{ __('Visualizza') }}">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            @can ("update activity")
                                             <a href="{{ route('activities.edit', $activity->id) }}" class="btn btn-sm btn-primary ms-1" title="{{ __('Modifica') }}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            @endcan
+                                            @can ("delete activity")
                                             <form action="{{ route('activities.destroy', $activity->id) }}" method="POST" class="d-inline ms-1" onsubmit="return confirm('{{ __('Sei sicuro di voler eliminare questa attività? Le associazioni con profili, DPI e sorveglianze sanitarie verranno rimosse.') }}');">
                                                 @csrf
                                                 @method('DELETE')
@@ -62,6 +67,7 @@
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
+                                            @endcan
                                         </td>
                                     </tr>
                                 @endforeach

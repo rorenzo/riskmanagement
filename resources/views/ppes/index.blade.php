@@ -6,9 +6,11 @@
                 {{ __('Elenco Dispositivi di Protezione Individuale (DPI)') }}
             </h2>
             <div>
+                @can ("create ppe")
                 <a href="{{ route('ppes.create') }}" class="btn btn-success btn-sm">
                     <i class="fas fa-plus me-1"></i> {{ __('Aggiungi DPI') }}
                 </a>
+                @endcan
             </div>
         </div>
     </x-slot>
@@ -38,7 +40,7 @@
                                     <th>{{ __('Descrizione') }}</th>
                                     <th class="text-center">{{ __('N. Attività Associate') }}</th>
                                     <th class="text-center no-sort">{{ __('Profili') }}</th>
-                                    <th class="text-center">{{ __('Azioni') }}</th>
+                                    <th class="text-center actions-column">{{ __('Azioni') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -56,9 +58,12 @@
                                             <a href="{{ route('ppes.show', $ppe->id) }}" class="btn btn-sm btn-info" title="{{ __('Visualizza') }}">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            @can ("update ppe")
                                             <a href="{{ route('ppes.edit', $ppe->id) }}" class="btn btn-sm btn-primary ms-1" title="{{ __('Modifica') }}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            @endcan
+                                            @can ("delete ppe")
                                             <form action="{{ route('ppes.destroy', $ppe->id) }}" method="POST" class="d-inline ms-1" onsubmit="return confirm('{{ __('Sei sicuro di voler eliminare questo DPI? Le associazioni con le attività verranno rimosse.') }}');">
                                                 @csrf
                                                 @method('DELETE')
@@ -66,6 +71,7 @@
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
+                                            @endcan
                                         </td>
                                     </tr>
                                 @endforeach
@@ -82,6 +88,11 @@
         <style>
             #ppesTable td, #ppesTable th {
                 vertical-align: middle;
+            }
+            
+            .actions-column {
+                width: 140px; /* Imposta una larghezza fissa per la colonna */
+                white-space: nowrap; /* Impedisce ai bottoni di andare a capo */
             }
         </style>
     @endpush

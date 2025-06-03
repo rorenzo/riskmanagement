@@ -1,3 +1,5 @@
+{{-- Si presume che questo file sia resources/views/auth/login.blade.php --}}
+{{-- E che tu abbia un resources/views/layouts/guest.blade.php adattato per Bootstrap --}}
 <x-guest-layout>
     <div class="container">
         <div class="row justify-content-center">

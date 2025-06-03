@@ -6,7 +6,9 @@
                 {{ __('Dettaglio Sezione:') }} {{ $section->nome }}
             </h2>
             <div>
+                @can ("update section")
                 <a href="{{ route('sections.edit', $section->id) }}" class="btn btn-primary btn-sm">{{ __('Modifica') }}</a>
+                @endcan
                 <a href="{{ route('sections.index') }}" class="btn btn-secondary btn-sm ms-2">{{ __('Torna alla Lista') }}</a>
             </div>
         </div>
@@ -19,12 +21,10 @@
                     <h5 class="mb-0">{{ __('Informazioni Sezione') }}</h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>{{ __('ID') }}:</strong> {{ $section->id }}</p>
                     <p><strong>{{ __('Nome Sezione') }}:</strong> {{ $section->nome }}</p>
                     <p><strong>{{ __('Ufficio di Appartenenza') }}:</strong> <a href="{{ route('offices.show', $section->office->id) }}">{{ $section->office->nome ?? 'N/D' }}</a></p>
                     <p><strong>{{ __('Descrizione') }}:</strong></p>
                     <p>{!! nl2br(e($section->descrizione)) ?: 'N/D' !!}</p>
-                    <p><strong>{{ __('Creata il') }}:</strong> {{ $section->created_at->format('d/m/Y H:i') }}</p>
                     <p><strong>{{ __('Ultima Modifica') }}:</strong> {{ $section->updated_at->format('d/m/Y H:i') }}</p>
                 </div>
             </div>

@@ -4,9 +4,14 @@
             <h2 class="h4 fw-semibold text-dark">
                 {{ __('Dettagli Sorveglianza Sanitaria') }}
             </h2>
-            <a href="{{ route('health_surveillances.index') }}" class="btn btn-secondary btn-sm">
-                <i class="fas fa-arrow-left me-1"></i> {{ __('Torna alla lista') }}
-            </a>
+            <div>
+                @can ("update health surveillance")
+                <a href="{{ route('health_surveillances.edit', $healthSurveillance->id) }}" class="btn btn-primary btn-sm">{{ __('Modifica') }}</a>
+                @endcan
+                <a href="{{ route('health_surveillances.index') }}" class="btn btn-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i> {{ __('Torna alla lista') }} </a>
+            </div>
+            
         </div>
     </x-slot>
 
@@ -14,15 +19,10 @@
         <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">{{ $healthSurveillance->name }}</h5>
-                <a href="{{ route('health_surveillances.edit', $healthSurveillance) }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-edit me-1"></i> {{ __('Modifica') }}
-                </a>
+                
             </div>
             <div class="card-body">
                 <dl class="row">
-                    <dt class="col-sm-3">{{ __('ID') }}</dt>
-                    <dd class="col-sm-9">{{ $healthSurveillance->id }}</dd>
-
                     <dt class="col-sm-3">{{ __('Nome') }}</dt>
                     <dd class="col-sm-9">{{ $healthSurveillance->name }}</dd>
 

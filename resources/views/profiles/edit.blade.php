@@ -47,14 +47,7 @@
         <h2 class="h4 fw-semibold text-dark">
             {{ __('Modifica Profilo Anagrafico:') }} {{ $profile->cognome }} {{ $profile->nome }}
         </h2>
-         {{-- FORM SEPARATO PER L'ELIMINAZIONE --}}
-                    <div class="mt-3 pt-3 border-top d-flex justify-content-end">
-                        <form method="POST" action="{{ route('profiles.destroy', $profile->id) }}" id="deleteProfileForm" class="d-inline" onsubmit="return confirm('{{ __('Sei sicuro di voler eliminare questo profilo? L\'operazione terminerà anche il periodo di impiego e l\'assegnazione alla sezione corrente.') }}');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger">{{ __('Elimina Profilo') }}</button>
-                        </form>
-                    </div>
+                    
     </x-slot>
 
     <div class="py-5">
@@ -303,7 +296,13 @@
                         </div>
                     </form> {{-- FINE FORM PRINCIPALE PER L'AGGIORNAMENTO --}}
 
-                   
+                   <div class="mt-3 pt-3 border-top d-flex justify-content-end">
+                        <form method="POST" action="{{ route('profiles.destroy', $profile->id) }}" id="deleteProfileForm" class="d-inline" onsubmit="return confirm('{{ __('Sei sicuro di voler eliminare questo profilo?') }}');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger">{{ __('Elimina Profilo') }}</button>
+                        </form>
+                    </div>
 
                 </div>
             </div>

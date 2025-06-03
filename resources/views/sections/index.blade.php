@@ -6,9 +6,11 @@
                 {{ __('Elenco Sezioni') }}
             </h2>
             <div>
+                @can ("create section")
                 <a href="{{ route('sections.create') }}" class="btn btn-success btn-sm">
                     <i class="fas fa-plus me-1"></i> {{ __('Aggiungi Sezione') }}
                 </a>
+                @endcan
             </div>
         </div>
     </x-slot>
@@ -58,9 +60,12 @@
                                             <a href="{{ route('sections.show', $section->id) }}" class="btn btn-sm btn-info" title="{{ __('Visualizza') }}">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            @can ("update section")
                                             <a href="{{ route('sections.edit', $section->id) }}" class="btn btn-sm btn-primary ms-1" title="{{ __('Modifica') }}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            @endcan
+                                            @can ("delete section")
                                             <form action="{{ route('sections.destroy', $section->id) }}" method="POST" class="d-inline ms-1" onsubmit="return confirm('{{ __('Sei sicuro di voler eliminare questa sezione? Le assegnazioni dei profili a questa sezione potrebbero essere rimosse o richiedere una riassegnazione.') }}');">
                                                 @csrf
                                                 @method('DELETE')
@@ -68,6 +73,7 @@
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
+                                            @endcan
                                         </td>
                                     </tr>
                                 @endforeach

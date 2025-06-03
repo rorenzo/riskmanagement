@@ -6,12 +6,12 @@ use App\Models\Profile;
 use App\Models\Section;
 use App\Models\EmploymentPeriod;
 use App\Models\Activity;
-use App\Models\PPE;
+use App\Models\PPE; 
 use App\Models\SafetyCourse;
 use App\Models\HealthSurveillance;
 use App\Models\HealthCheckRecord;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{Auth, DB};
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\{Log, Schema, Validator}; // Schema e Validator non sono usati in tutti i metodi qui ma possono servire
@@ -20,6 +20,17 @@ use Illuminate\Support\Facades\{Log, Schema, Validator}; // Schema e Validator n
 
 class AnagraficaController extends Controller
 {
+    
+     public function __construct()
+{
+    $resourceName = 'profile'; // Chiave usata in PermissionSeeder
+
+        $this->middleware('permission:viewAny ' . $resourceName . '|view ' . $resourceName, ['only' => ['index', 'show', 'data']]);
+        $this->middleware('permission:create ' . $resourceName, ['only' => ['create', 'store']]);
+        $this->middleware('permission:update ' . $resourceName, ['only' => ['edit', 'update', 'updatePpes']]);
+        $this->middleware('permission:delete ' . $resourceName, ['only' => ['destroy']]);
+}
+
     /**
      * Display a listing of the resource.
      */
@@ -33,7 +44,16 @@ class AnagraficaController extends Controller
             }
             return [$section->nome => $displayText];
         });
-        return view('profiles.index', compact('sectionsForFilter'));
+
+        // Passa i permessi dell'utente alla vista
+        $user = Auth::user();
+        $userPermissions = [
+            'can_view_profile' => $user->can('view profile'), // O 'viewAny profile' se più appropriato per il link show
+            'can_edit_profile' => $user->can('update profile'),
+            'can_delete_profile' => $user->can('delete profile'),
+        ];
+
+        return view('profiles.index', compact('sectionsForFilter', 'userPermissions'));
     }
 
     /**

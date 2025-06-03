@@ -8,6 +8,18 @@ use Illuminate\Http\Request; // Per la validazione di base, considera di creare 
 
 class OfficeController extends Controller
 {
+    
+    public function __construct()
+    {
+        // Protezione basata sui permessi per le azioni CRUD
+        // I nomi dei permessi devono corrispondere a quelli generati da PermissionSeeder
+        // es. "viewAny office", "create office", ecc.
+        $this->middleware('permission:viewAny office|view office', ['only' => ['index', 'show', 'showProfiles']]);
+        $this->middleware('permission:create office', ['only' => ['create', 'store']]);
+        $this->middleware('permission:update office', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:delete office', ['only' => ['destroy']]);
+    }
+    
     /**
      * Display a listing of the resource.
      *

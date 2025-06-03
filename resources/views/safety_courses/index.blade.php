@@ -6,9 +6,11 @@
                 {{ __('Elenco Corsi di Sicurezza') }}
             </h2>
             <div>
+                @can ("create safety course")
                 <a href="{{ route('safety_courses.create') }}" class="btn btn-success btn-sm">
                     <i class="fas fa-plus me-1"></i> {{ __('Aggiungi Corso') }}
                 </a>
+                @endcan
             </div>
         </div>
     </x-slot>
@@ -39,7 +41,7 @@
                                     <th class="text-center">{{ __('Durata Validità (Anni)') }}</th>
                                     <th class="text-center">{{ __('N. Partecipanti') }}</th>
                                     <th class="text-center no-sort">{{ __('Profili') }}</th>
-                                    <th class="text-center">{{ __('Azioni') }}</th>
+                                    <th class="text-center actions-column">{{ __('Azioni') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -58,9 +60,12 @@
                                             <a href="{{ route('safety_courses.show', $course->id) }}" class="btn btn-sm btn-info" title="{{ __('Visualizza') }}">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            @can ("update safety course")
                                             <a href="{{ route('safety_courses.edit', $course->id) }}" class="btn btn-sm btn-primary ms-1" title="{{ __('Modifica') }}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            @endcan
+                                            @can ("delete safety course")
                                             <form action="{{ route('safety_courses.destroy', $course->id) }}" method="POST" class="d-inline ms-1" onsubmit="return confirm('{{ __('Sei sicuro di voler eliminare questo corso? Le registrazioni delle frequenze dei profili a questo corso potrebbero essere influenzate o eliminate a seconda della configurazione del database.') }}');">
                                                 @csrf
                                                 @method('DELETE')
@@ -68,6 +73,7 @@
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
+                                            @endcan
                                         </td>
                                     </tr>
                                 @endforeach
@@ -84,6 +90,11 @@
         <style>
             #safetyCoursesTable td, #safetyCoursesTable th {
                 vertical-align: middle;
+            }
+            
+            .actions-column {
+                width: 140px; /* Imposta una larghezza fissa per la colonna */
+                white-space: nowrap; /* Impedisce ai bottoni di andare a capo */
             }
         </style>
     @endpush

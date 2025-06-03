@@ -3,7 +3,6 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-
         <title>{{ config('app.name', 'Laravel') }}</title>
 
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -15,7 +14,7 @@
 
     </head>
     <body class="d-flex flex-column min-vh-100 bg-light"> {{-- bg-light è un grigio chiaro di Bootstrap, min-vh-100 per full height --}}
-
+<meta name="csrf-token" content="{{ csrf_token() }}">
         {{-- Includi la tua navigation bar. Assicurati che layouts.navigation sia anch'esso convertito a Bootstrap 5 --}}
         @include('layouts.navigation')
 

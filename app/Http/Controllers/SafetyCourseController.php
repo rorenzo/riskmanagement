@@ -6,9 +6,22 @@ use App\Models\SafetyCourse;
 use App\Models\Profile; // Per l'assegnazione dei corsi ai profili
 use Illuminate\Http\Request;
 use Carbon\Carbon; // Per calcolare la data di scadenza
+use Illuminate\Support\Str;
 
 class SafetyCourseController extends Controller
 {
+    
+     public function __construct()
+{
+    $resourceName = 'safetyCourse'; // Chiave usata in PermissionSeeder
+    
+        $resourceName = str_replace('_', ' ', Str::snake($resourceName)); // es. "health surveillance"
+
+        $this->middleware('permission:viewAny ' . $resourceName . '|view ' . $resourceName, ['only' => ['index', 'show', 'showProfiles']]);
+        $this->middleware('permission:create ' . $resourceName, ['only' => ['create', 'store']]);
+        $this->middleware('permission:update ' . $resourceName, ['only' => ['edit', 'update']]);
+        $this->middleware('permission:delete ' . $resourceName, ['only' => ['destroy']]);
+}
     /**
      * Display a listing of the resource.
      */

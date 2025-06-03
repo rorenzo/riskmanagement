@@ -18,6 +18,22 @@
             <file>file://192.168.56.101/allusers/riskmanagement/app/Models/ProfileSafetyCourse.php</file>
             <file>file://192.168.56.101/allusers/riskmanagement/resources/views/profile_safety_courses/create.blade.php</file>
             <file>file://192.168.56.101/allusers/riskmanagement/resources/views/profile_safety_courses/edit.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/database/seeders/RoleSeeder.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/database/seeders/PermissionSeeder.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/app/Http/Controllers/ActivityController.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/app/Http/Controllers/Admin/UserController.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/admin/users/index.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/admin/users/_form.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/admin/users/create.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/admin/users/edit.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/app/Http/Controllers/ProfileController.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/auth/login.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/layouts/guest.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/components/application-logo.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/resources/views/layouts/app.blade.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/bootstrap/app.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/app/Http/Controllers/Admin/RoleController.php</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/app/Http/Controllers/Admin/PermissionController.php</file>
         </group>
     </open-files>
 </project-private>

@@ -9,6 +9,16 @@ use Illuminate\Http\Request; // Considera FormRequest dedicate
 
 class PPEController extends Controller
 {
+    
+     public function __construct()
+{
+    $resourceName = 'ppe'; // Chiave usata in PermissionSeeder
+
+        $this->middleware('permission:viewAny ' . $resourceName . '|view ' . $resourceName, ['only' => ['index', 'show', 'showProfiles']]);
+        $this->middleware('permission:create ' . $resourceName, ['only' => ['create', 'store']]);
+        $this->middleware('permission:update ' . $resourceName, ['only' => ['edit', 'update']]);
+        $this->middleware('permission:delete ' . $resourceName, ['only' => ['destroy']]);
+}
     /**
      * Display a listing of the resource.
      */

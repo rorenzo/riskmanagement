@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers; 
 
 use App\Models\Activity;
 use App\Models\Profile;
@@ -13,6 +13,17 @@ use Illuminate\Support\Facades\Log;
 
 class ActivityController extends Controller
 {
+    
+    public function __construct()
+{
+    $resourceName = 'activity'; // Chiave usata in PermissionSeeder
+
+        $this->middleware('permission:viewAny ' . $resourceName . '|view ' . $resourceName, ['only' => ['index', 'show', 'showProfiles']]);
+        $this->middleware('permission:create ' . $resourceName, ['only' => ['create', 'store']]);
+        $this->middleware('permission:update ' . $resourceName, ['only' => ['edit', 'update']]);
+        $this->middleware('permission:delete ' . $resourceName, ['only' => ['destroy']]);
+}
+    
     /**
      * Display a listing of the resource.
      */

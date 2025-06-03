@@ -6,7 +6,8 @@
                 {{ __('Dettaglio Corso di Sicurezza:') }} {{ $safetyCourse->name }}
             </h2>
             <div>
-                <a href="{{ route('safety_courses.edit', $safetyCourse->id) }}" class="btn btn-primary btn-sm">{{ __('Modifica') }}</a>
+                @can ("update safety course")
+                <a href="{{ route('safety_courses.edit', $safetyCourse->id) }}" class="btn btn-primary btn-sm">{{ __('Modifica') }}</a>@endcan
                 <a href="{{ route('safety_courses.index') }}" class="btn btn-secondary btn-sm ms-2">{{ __('Torna alla Lista') }}</a>
             </div>
         </div>
@@ -20,12 +21,10 @@
                     <h5 class="mb-0">{{ __('Informazioni Corso') }}</h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>{{ __('ID') }}:</strong> {{ $safetyCourse->id }}</p>
                     <p><strong>{{ __('Nome Corso') }}:</strong> {{ $safetyCourse->name }}</p>
                     <p><strong>{{ __('Descrizione') }}:</strong></p>
                     <p>{!! nl2br(e($safetyCourse->description)) ?: 'N/D' !!}</p>
                     <p><strong>{{ __('Durata Validità') }}:</strong> {{ $safetyCourse->duration_years ? $safetyCourse->duration_years . ' anni' : 'Non specificata / Non scade' }}</p>
-                    <p><strong>{{ __('Creato il') }}:</strong> {{ $safetyCourse->created_at->format('d/m/Y H:i') }}</p>
                     <p><strong>{{ __('Ultima Modifica') }}:</strong> {{ $safetyCourse->updated_at->format('d/m/Y H:i') }}</p>
                 </div>
             </div>

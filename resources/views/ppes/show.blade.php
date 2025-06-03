@@ -5,8 +5,8 @@
             <h2 class="h4 fw-semibold text-dark">
                 {{ __('Dettaglio DPI:') }} {{ $ppe->name }}
             </h2>
-            <div>
-                <a href="{{ route('ppes.edit', $ppe->id) }}" class="btn btn-primary btn-sm">{{ __('Modifica') }}</a>
+            <div>@can ("update ppe")
+                <a href="{{ route('ppes.edit', $ppe->id) }}" class="btn btn-primary btn-sm">{{ __('Modifica') }}</a>@endcan
                 <a href="{{ route('ppes.index') }}" class="btn btn-secondary btn-sm ms-2">{{ __('Torna alla Lista') }}</a>
             </div>
         </div>
@@ -19,11 +19,9 @@
                     <h5 class="mb-0">{{ __('Informazioni DPI') }}</h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>{{ __('ID') }}:</strong> {{ $ppe->id }}</p>
                     <p><strong>{{ __('Nome DPI') }}:</strong> {{ $ppe->name }}</p>
                     <p><strong>{{ __('Descrizione') }}:</strong></p>
                     <p>{!! nl2br(e($ppe->description)) ?: 'N/D' !!}</p>
-                    <p><strong>{{ __('Creato il') }}:</strong> {{ $ppe->created_at->format('d/m/Y H:i') }}</p>
                     <p><strong>{{ __('Ultima Modifica') }}:</strong> {{ $ppe->updated_at->format('d/m/Y H:i') }}</p>
                 </div>
             </div>

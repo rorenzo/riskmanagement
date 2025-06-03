@@ -1,60 +1,78 @@
 <?php
-
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Str;
 
 class RoleSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Resetta i permessi e i ruoli cachati
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Crea il ruolo Amministratore
-        $adminRole = Role::firstOrCreate(['name' => 'amministratore', 'guard_name' => 'web']);
-        // Assegna tutti i permessi all'amministratore
-        // Nota: questo è un modo semplice. Per maggiore granularità, elenca i permessi.
+        // --- Ruolo Amministratore ---
+        $adminRole = Role::firstOrCreate(['name' => 'Amministratore', 'guard_name' => 'web']);
+        // L'amministratore ottiene tutti i permessi.
+        // Questo è un modo semplice; per progetti più grandi, potresti voler essere più granulare.
         $allPermissions = Permission::all();
         $adminRole->syncPermissions($allPermissions);
         $this->command->info('Ruolo Amministratore creato e tutti i permessi assegnati.');
 
-        // Crea il ruolo Utente
-        $userRole = Role::firstOrCreate(['name' => 'utente', 'guard_name' => 'web']);
+        // --- Ruolo Utente ---
+        $userRole = Role::firstOrCreate(['name' => 'Utente', 'guard_name' => 'web']);
 
-        // Definisci i modelli per cui l'utente può solo visualizzare
+        // Nomi chiave dei modelli/risorse per cui l'utente ha permessi di visualizzazione
+        // Devono corrispondere a quelli usati in PermissionSeeder (la parte dopo l'azione)
         $modelsForUserView = [
-            'anagrafiche',
-            'ufficio',
-            'sezione',
-            'attività',
-            'dpi',
-            'sorveglianza_sanitaria',
-            'scadenza_sorveglianza',
-            'movimenti',
-            'corsi',
+            'profile',
+            'office',
+            'section',
+            'activity',
+            'ppe',
+            'healthSurveillance',
+            'healthCheckRecord',    // L'utente può vedere i propri record e quelli a cui ha accesso
+            'safetyCourse',
+            'profileSafetyCourse',  // L'utente può vedere le proprie frequenze
         ];
 
-        $userViewPermissions = [];
-        foreach ($modelsForUserView as $model) {
-            // L'utente può vedere l'elenco e il dettaglio
-            $viewAnyPermission = Permission::where('name', 'viewAny ' . $model)->first();
-            if ($viewAnyPermission) {
-                $userViewPermissions[] = $viewAnyPermission;
+        $userViewPermissionsIds = [];
+        foreach ($modelsForUserView as $modelKey) {
+            $permissionViewAnyName = 'viewAny ' . str_replace('_', ' ', Str::snake($modelKey));
+            $permissionViewName = 'view ' . str_replace('_', ' ', Str::snake($modelKey));
+
+            $permViewAny = Permission::where('name', $permissionViewAnyName)->first();
+            if ($permViewAny) {
+                $userViewPermissionsIds[] = $permViewAny->id;
+            } else {
+                $this->command->warn("Permesso di visualizzazione (viewAny) non trovato per Utente: {$permissionViewAnyName}");
             }
-            $viewPermission = Permission::where('name', 'view ' . $model)->first();
-            if ($viewPermission) {
-                $userViewPermissions[] = $viewPermission;
+
+            $permView = Permission::where('name', $permissionViewName)->first();
+            if ($permView) {
+                $userViewPermissionsIds[] = $permView->id;
+            } else {
+                $this->command->warn("Permesso di visualizzazione (view) non trovato per Utente: {$permissionViewName}");
             }
         }
 
-        $userRole->syncPermissions($userViewPermissions);
-        $this->command->info('Ruolo Utente creato e permessi di sola visualizzazione assegnati.');
+        // Aggiungi permessi specifici per i report per l'utente
+        $reportScadenzePerm = Permission::where('name', 'view report scadenze_sorveglianza')->first();
+        if ($reportScadenzePerm) {
+            $userViewPermissionsIds[] = $reportScadenzePerm->id;
+        } else {
+             $this->command->warn("Permesso 'view report scadenze_sorveglianza' non trovato per Utente.");
+        }
+
+        $reportMovimentiPerm = Permission::where('name', 'view report movimenti')->first();
+        if ($reportMovimentiPerm) {
+            $userViewPermissionsIds[] = $reportMovimentiPerm->id;
+        } else {
+            $this->command->warn("Permesso 'view report movimenti' non trovato per Utente.");
+        }
+
+        $userRole->syncPermissions(array_unique($userViewPermissionsIds));
+        $this->command->info('Ruolo Utente creato e permessi di visualizzazione assegnati.');
     }
 }

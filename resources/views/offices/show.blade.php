@@ -5,8 +5,8 @@
             <h2 class="h4 fw-semibold text-dark">
                 {{ __('Dettaglio Ufficio:') }} {{ $office->nome }}
             </h2>
-            <div>
-                <a href="{{ route('offices.edit', $office->id) }}" class="btn btn-primary btn-sm">{{ __('Modifica') }}</a>
+            <div>@can ("update office")
+                <a href="{{ route('offices.edit', $office->id) }}" class="btn btn-primary btn-sm">{{ __('Modifica') }}</a>@endcan
                 <a href="{{ route('offices.index') }}" class="btn btn-secondary btn-sm ms-2">{{ __('Torna alla Lista') }}</a>
             </div>
         </div>
@@ -22,7 +22,6 @@
                     <p><strong>{{ __('Nome') }}:</strong> {{ $office->nome }}</p>
                     <p><strong>{{ __('Descrizione') }}:</strong></p>
                     <p>{!! nl2br(e($office->descrizione)) ?: 'N/D' !!}</p>
-                    <p><strong>{{ __('Creato il') }}:</strong> {{ $office->created_at->format('d/m/Y H:i') }}</p>
                     <p><strong>{{ __('Ultima Modifica') }}:</strong> {{ $office->updated_at->format('d/m/Y H:i') }}</p>
                 </div>
             </div>

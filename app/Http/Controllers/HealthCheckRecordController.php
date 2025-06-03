@@ -10,9 +10,19 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class HealthCheckRecordController extends Controller
 {
+    
+     public function __construct()
+{
+    $resourceName = 'healthCheckRecord'; // Chiave usata in PermissionSeeder
+        $resourceName = str_replace('_', ' ', Str::snake($resourceName)); // es. "health surveillance"
+
+        $this->middleware('permission:update ' . $resourceName, ['only' => ['edit', 'update', 'create', 'store', 'update']]);
+        $this->middleware('permission:delete ' . $resourceName, ['only' => ['destroy']]);
+}
     /**
      * Show the form for creating a new health check record for a specific profile.
      */

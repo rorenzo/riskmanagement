@@ -6,7 +6,9 @@
                 {{ __('Dettaglio Attività:') }} {{ $activity->name }}
             </h2>
             <div>
+                @can ("update activity")
                 <a href="{{ route('activities.edit', $activity->id) }}" class="btn btn-primary btn-sm">{{ __('Modifica') }}</a>
+                @endcan
                 <a href="{{ route('activities.index') }}" class="btn btn-secondary btn-sm ms-2">{{ __('Torna alla Lista') }}</a>
             </div>
         </div>
@@ -20,7 +22,6 @@
                     <h5 class="mb-0">{{ __('Informazioni Attività') }}</h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>{{ __('ID') }}:</strong> {{ $activity->id }}</p>
                     <p><strong>{{ __('Nome Attività') }}:</strong> {{ $activity->name }}</p>
                     <p><strong>{{ __('Descrizione') }}:</strong></p>
                     <p>{!! nl2br(e($activity->description)) ?: 'N/D' !!}</p>
@@ -103,9 +104,6 @@
                 </div>
             </div>
             
-            <div class="mt-4">
-                 <a href="{{ route('activities.index') }}" class="btn btn-secondary">{{ __('Torna alla Lista Attività') }}</a>
-            </div>
 
         </div>
     </div>
