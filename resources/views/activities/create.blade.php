@@ -43,23 +43,24 @@
                                     @error('description') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
 
-                                {{-- DPI Associati --}}
-                                <hr class="my-4">
-                                <h5 class="card-title mb-3">{{ __('DPI Associati') }}</h5>
-                                <div class="mb-3 custom-btn-group">
-                                    <div class="row">
-                                        @forelse ($ppes as $ppe)
-                                            <div class="col-md-4 mb-2">
-                                                <input class="form-check-input" type="checkbox" name="ppe_ids[]" value="{{ $ppe->id }}" id="ppe_create_{{ $ppe->id }}"
-                                                       {{ (is_array(old('ppe_ids')) && in_array($ppe->id, old('ppe_ids'))) ? 'checked' : '' }}>
-                                                <label class="form-check-label" for="ppe_create_{{ $ppe->id }}">{{ $ppe->name }}</label>
-                                            </div>
-                                        @empty
-                                            <p class="text-muted col-12">{{__('Nessun DPI disponibile.')}}</p>
-                                        @endforelse
-                                    </div>
-                                    @error('ppe_ids') <div class="text-danger mt-2">{{ $message }}</div> @enderror
-                                </div>
+                                {{-- Rischi Associati --}}
+    <hr class="my-4">
+    <h5 class="card-title mb-3">{{ __('Rischi Associati') }}</h5>
+    <div class="mb-3 custom-btn-group">
+        <div class="row">
+            @forelse ($risks as $risk) {{-- $risks è passato dal controller --}}
+                <div class="col-md-4 mb-2">
+                    <input class="form-check-input" type="checkbox" name="risk_ids[]" value="{{ $risk->id }}" id="risk_create_{{ $risk->id }}"
+                           {{ (is_array(old('risk_ids')) && in_array($risk->id, old('risk_ids'))) ? 'checked' : '' }}>
+                    <label class="form-check-label" for="risk_create_{{ $risk->id }}">{{ $risk->name }}</label>
+                </div>
+            @empty
+                <p class="text-muted col-12">{{__('Nessun Rischio disponibile. Creane prima qualcuno.')}}</p>
+            @endforelse
+        </div>
+        @error('risk_ids') <div class="text-danger mt-2">{{ $message }}</div> @enderror
+        @error('risk_ids.*') <div class="text-danger mt-2">{{ $message }}</div> @enderror
+    </div>
 
                                 {{-- Sorveglianze Sanitarie Associate --}}
                                 <hr class="my-4">

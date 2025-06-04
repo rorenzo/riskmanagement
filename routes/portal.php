@@ -93,7 +93,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/activities/{activity}/profiles', [ActivityController::class, 'showProfiles'])->name('activities.showProfiles'); // Corretto
     Route::get('/safety_courses/{safety_course}/profiles', [SafetyCourseController::class, 'showProfiles'])->name('safety_courses.showProfiles');
     Route::get('/health_surveillances/{health_surveillance}/profiles', [HealthSurveillanceController::class, 'showProfiles'])->name('health_surveillances.showProfiles');
-});
+
+    
+    Route::resource('risks', App\Http\Controllers\RiskController::class);
+    Route::get('/risks/{risk}/profiles', [App\Http\Controllers\RiskController::class, 'showProfiles'])->name('risks.showProfiles');
+    
+    
+    });
 
 // Gruppo per Amministrazione (Utenti, Ruoli, Permessi)
 Route::middleware(['auth', 'role:Amministratore'])->prefix('admin')->name('admin.')->group(function () {

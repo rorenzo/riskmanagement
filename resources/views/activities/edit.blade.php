@@ -45,25 +45,26 @@
                                     @error('description') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
 
-                                {{-- DPI Associati --}}
-                                <hr class="my-4">
-                                <div class="card mb-4">
-                                    <div class="card-header"><h5 class="mb-0">{{ __('DPI Associati') }}</h5></div>
-                                    <div class="card-body custom-btn-group">
-                                        <div class="row">
-                                            @forelse ($ppes as $ppe)
-                                                <div class="col-md-4 mb-2">
-                                                    <input class="form-check-input" type="checkbox" name="ppe_ids[]" value="{{ $ppe->id }}" id="ppe_edit_{{ $ppe->id }}"
-                                                           {{ in_array($ppe->id, old('ppe_ids', $associatedPpeIds ?? [])) ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="ppe_edit_{{ $ppe->id }}">{{ $ppe->name }}</label>
-                                                </div>
-                                            @empty
-                                                <p class="text-muted col-12">{{__('Nessun DPI disponibile.')}}</p>
-                                            @endforelse
-                                        </div>
-                                        @error('ppe_ids') <div class="text-danger mt-2">{{ $message }}</div> @enderror
-                                    </div>
-                                </div>
+                                {{-- Rischi Associati --}}
+    <hr class="my-4">
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">{{ __('Rischi Associati') }}</h5></div>
+        <div class="card-body custom-btn-group">
+            <div class="row">
+                @forelse ($allRisks as $risk) {{-- $allRisks passato dal controller --}}
+                    <div class="col-md-4 mb-2">
+                        <input class="form-check-input" type="checkbox" name="risk_ids[]" value="{{ $risk->id }}" id="risk_edit_{{ $risk->id }}"
+                               {{ in_array($risk->id, old('risk_ids', $associatedRiskIds ?? [])) ? 'checked' : '' }}>
+                        <label class="form-check-label" for="risk_edit_{{ $risk->id }}">{{ $risk->name }}</label>
+                    </div>
+                @empty
+                    <p class="text-muted col-12">{{__('Nessun Rischio disponibile.')}}</p>
+                @endforelse
+            </div>
+            @error('risk_ids') <div class="text-danger mt-2">{{ $message }}</div> @enderror
+            @error('risk_ids.*') <div class="text-danger mt-2">{{ $message }}</div> @enderror
+        </div>
+    </div>
 
                                 {{-- Sorveglianze Sanitarie Associate --}}
                                 <hr class="my-4">

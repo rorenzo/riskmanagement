@@ -20,7 +20,7 @@
                             <table id="relatedProfilesTable" class="table table-striped table-hover" style="width:100%">
                                 <thead>
                                     <tr>
-                                        <th>{{ __('Grado') }}</th>
+                                        <th>{{ __('Grado Categoria/Profilo') }}</th>
                                         <th>{{ __('Cognome') }}</th>
                                         <th>{{ __('Nome') }}</th>
                                         <th>{{ __('Email') }}</th>

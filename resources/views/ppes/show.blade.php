@@ -27,29 +27,24 @@
             </div>
 
             <div class="card shadow-sm">
+                <div class="card shadow-sm">
                 <div class="card-header">
-                    <h5 class="mb-0">{{ __('Attività Associate a Questo DPI') }}</h5>
+                    <h5 class="mb-0">{{ __('Rischi che Richiedono Questo DPI') }}</h5> {{-- MODIFICATO --}}
                 </div>
                 <div class="card-body">
-                    @if($ppe->activities && $ppe->activities->count() > 0)
-                        <ul class="list-group">
-                            @foreach($ppe->activities as $activity)
+                    @if($ppe->risks && $ppe->risks->isNotEmpty()) {{-- MODIFICATO --}}
+                        <ul class="list-group list-group-flush">
+                            @foreach($ppe->risks as $risk) {{-- MODIFICATO --}}
                                 <li class="list-group-item">
-                                    {{-- Assumendo che tu abbia una rotta 'activities.show' --}}
-                                    {{-- <a href="{{ route('activities.show', $activity->id) }}"> --}}
-                                        {{ $activity->name }}
-                                    {{-- </a> --}}
+                                    <a href="{{ route('risks.show', $risk->id) }}">{{ $risk->name }}</a>
                                 </li>
                             @endforeach
                         </ul>
                     @else
-                        <p class="text-muted">{{ __('Nessuna attività attualmente associata a questo DPI.') }}</p>
+                        <p class="text-muted">{{ __('Nessun rischio attualmente richiede questo DPI.') }}</p> {{-- MODIFICATO --}}
                     @endif
                 </div>
-                {{-- Potresti aggiungere un link per associare questo DPI a nuove attività --}}
-                {{-- <div class="card-footer">
-                    <a href="{{ route('ppes.assign_activity_form', $ppe->id) }}" class="btn btn-success btn-sm">Associa ad Attività</a>
-                </div> --}}
+            </div>
             </div>
         </div>
     </div>

@@ -27,6 +27,7 @@ class PermissionSeeder extends Seeder
             'user',                 // Utenti del portale (gestiti in Admin)
             'role',                 // Ruoli (gestiti in Admin)
             'permission',           // Permessi (gestiti in Admin, principalmente visualizzazione)
+            'risk',
         ];
 
         // Azioni CRUD standard

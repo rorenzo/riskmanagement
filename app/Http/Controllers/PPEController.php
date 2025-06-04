@@ -23,11 +23,10 @@ class PPEController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-{
-    // Per DataTables client-side
-    $ppes = PPE::withCount('activities')->orderBy('name')->get();
-    return view('ppes.index', compact('ppes'));
-}
+    {
+        $ppes = PPE::withCount(['risks', 'profiles'])->orderBy('name')->get(); // MODIFICATO
+        return view('ppes.index', compact('ppes'));
+    }
 
     /**
      * Show the form for creating a new resource.
@@ -57,7 +56,7 @@ class PPEController extends Controller
      */
     public function show(PPE $ppe)
     {
-         $ppe->load('activities'); // Per vedere le attività associate
+         $ppe->load(['risks', 'profiles']); // MODIFICATO: carica 'risks'
          return view('ppes.show', compact('ppe'));
     }
 
@@ -90,13 +89,18 @@ class PPEController extends Controller
      */
     public function destroy(PPE $ppe)
     {
-        // Prima di eliminare il DPI, potresti voler dissociare tutte le attività
-        // $ppe->activities()->detach(); // Questo rimuove tutte le associazioni nella tabella pivot
-
-        $ppe->delete(); // Soft delete
-
-         return redirect()->route('ppes.index')->with('success', 'DPI eliminato con successo.');
-//        return response()->json(['message' => 'DPI eliminato']); // Placeholder
+        try {
+            DB::beginTransaction();
+            $ppe->risks()->detach();     // MODIFICATO: stacca dai rischi
+            $ppe->profiles()->detach();  // Mantenuto se esiste assegnazione diretta
+            $ppe->delete(); // Soft delete
+            DB::commit();
+            return redirect()->route('ppes.index')->with('success', 'DPI eliminato con successo.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Errore eliminazione DPI ID {$ppe->id}: " . $e->getMessage() . " Stack: " . $e->getTraceAsString());
+            return redirect()->route('ppes.index')->with('error', 'Errore durante l\'eliminazione del DPI: ' . $e->getMessage());
+        }
     }
     
     public function showProfiles(PPE $ppe)

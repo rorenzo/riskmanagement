@@ -38,7 +38,7 @@
                                 <tr>
                                     <th>{{ __('Nome DPI') }}</th>
                                     <th>{{ __('Descrizione') }}</th>
-                                    <th class="text-center">{{ __('N. Attività Associate') }}</th>
+                                    <th class="text-center">{{ __('N. Rischi Associati') }}</th>
                                     <th class="text-center no-sort">{{ __('Profili') }}</th>
                                     <th class="text-center actions-column">{{ __('Azioni') }}</th>
                                 </tr>
@@ -48,10 +48,10 @@
                                     <tr>
                                         <td>{{ $ppe->name }}</td>
                                         <td>{{ Str::limit($ppe->description, 70) }}</td>
-                                        <td class="text-center">{{ $ppe->activities_count ?? $ppe->activities->count() }}</td>
+<td class="text-center">{{ $ppe->risks_count ?? $ppe->risks->count() }}</td> {{-- MODIFICATO --}}
                                         <td class="text-center">
-    <a href="{{ route('ppes.showProfiles', $ppe->id) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('Vedi Profili con questo DPI') }}">
-        <i class="fas fa-users"></i>
+    <a href="{{ route('ppes.showProfiles', $ppe->id) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('Vedi Profili con Assegnazione Diretta di questo DPI') }}">
+        <i class="fas fa-user-check"></i>
     </a>
 </td>
                                         <td class="text-center">

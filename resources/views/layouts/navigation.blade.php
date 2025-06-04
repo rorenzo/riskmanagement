@@ -51,6 +51,11 @@
                         {{ __('Sorveglianza Sanitaria') }}
                     </a>
                 </li>
+                <li class="nav-item"> 
+    <a class="nav-link {{ request()->routeIs('risks.*') ? 'active' : '' }}" href="{{ route('risks.index') }}">
+        {{ __('Rischi') }}
+    </a>
+</li>
             </ul>
 
             {{-- Menu Utente a Destra --}}

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Section;
-use Illuminate\Http\Request; // O la form request specifica se la crei
+use Illuminate\Http\Request; // O la form request specifica se la crei 
 use App\Models\Office;
 
 class SectionController extends Controller

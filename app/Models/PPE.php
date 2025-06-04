@@ -21,15 +21,23 @@ class PPE extends Model // Personal Protective Equipment
     /**
      * Le attività associate a questo DPI.
      */
-    public function activities(): BelongsToMany
+//    public function activities(): BelongsToMany
+//    {
+//        // Specifica esplicitamente i nomi delle chiavi esterne e locali sulla tabella pivot
+//        return $this->belongsToMany(
+//            Activity::class, 
+//            'activity_ppe',  
+//            'ppe_id',        
+//            'activity_id'    
+//        );
+//    }
+    
+    /**
+     * I rischi per cui questo DPI è necessario.
+     */
+    public function risks(): BelongsToMany
     {
-        // Specifica esplicitamente i nomi delle chiavi esterne e locali sulla tabella pivot
-        return $this->belongsToMany(
-            Activity::class, 
-            'activity_ppe',  
-            'ppe_id',        
-            'activity_id'    
-        );
+        return $this->belongsToMany(Risk::class, 'risk_ppe','ppe_id', 'risk_id' );
     }
     
     

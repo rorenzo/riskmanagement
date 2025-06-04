@@ -6,7 +6,7 @@ use App\Models\Activity;
 use App\Models\Profile;
 use App\Models\SafetyCourse;
 use App\Models\HealthSurveillance;
-use App\Models\PPE;
+use App\Models\Risk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -27,24 +27,25 @@ class ActivityController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
-{
-    $activities = Activity::withCount(['ppes', 'healthSurveillances', 'profiles', 'safetyCourses'])
+public function index()
+    {
+        $activities = Activity::withCount(['risks', 'healthSurveillances', 'profiles', 'safetyCourses']) // MODIFICATO
                             ->orderBy('name')
                             ->get();
-    return view('activities.index', compact('activities'));
-}
+        return view('activities.index', compact('activities'));
+    }
 
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-        $ppes = PPE::orderBy('name')->get();
+        $risks = Risk::orderBy('name')->get(); // MODIFICATO
         $healthSurveillances = HealthSurveillance::orderBy('name')->get();
-        $safetyCourses = SafetyCourse::orderBy('name')->get(); // <-- Recupera i corsi
-        return view('activities.create', compact('ppes', 'healthSurveillances', 'safetyCourses')); // <-- Passali alla vista
+        $safetyCourses = SafetyCourse::orderBy('name')->get();
+        return view('activities.create', compact('risks', 'healthSurveillances', 'safetyCourses')); // MODIFICATO
     }
+
 
     /**
      * Store a newly created resource in storage.
@@ -54,24 +55,23 @@ class ActivityController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255|unique:activities,name',
             'description' => 'nullable|string',
-            'ppe_ids' => 'nullable|array',
-            'ppe_ids.*' => 'exists:ppes,id',
+            'risk_ids' => 'nullable|array', // MODIFICATO da ppe_ids
+            'risk_ids.*' => 'exists:risks,id', // MODIFICATO da ppes,id
             'health_surveillance_ids' => 'nullable|array',
             'health_surveillance_ids.*' => 'exists:health_surveillances,id',
-            'safety_course_ids' => 'nullable|array', // <-- Validazione per i corsi
-            'safety_course_ids.*' => 'exists:safety_courses,id', // <-- Validazione per i corsi
+            'safety_course_ids' => 'nullable|array',
+            'safety_course_ids.*' => 'exists:safety_courses,id',
         ]);
-
         try {
             DB::beginTransaction();
             $activity = Activity::create([
                 'name' => $validatedData['name'],
                 'description' => $validatedData['description'],
             ]);
-
-            $activity->ppes()->sync($request->input('ppe_ids', []));
+            
+            $activity->risks()->sync($request->input('risk_ids', [])); // MODIFICATO
             $activity->healthSurveillances()->sync($request->input('health_surveillance_ids', []));
-            $activity->safetyCourses()->sync($request->input('safety_course_ids', [])); // <-- Associa i corsi
+            $activity->safetyCourses()->sync($request->input('safety_course_ids', []));
 
             DB::commit();
             return redirect()->route('activities.index')->with('success', 'Attività creata con successo e associazioni aggiornate.');
@@ -82,12 +82,13 @@ class ActivityController extends Controller
         }
     }
 
+
     /**
      * Display the specified resource.
      */
     public function show(Activity $activity)
     {
-         $activity->load(['profiles', 'ppes', 'healthSurveillances', 'safetyCourses']); // <-- Carica anche i safetyCourses
+         $activity->load(['profiles', 'risks.ppes', 'healthSurveillances', 'safetyCourses']); // MODIFICATO
          return view('activities.show', compact('activity'));
     }
 
@@ -96,20 +97,20 @@ class ActivityController extends Controller
      */
     public function edit(Activity $activity)
     {
-        $ppes = PPE::orderBy('name')->get();
-        $associatedPpeIds = $activity->ppes()->pluck('ppes.id')->toArray();
+        $allRisks = Risk::orderBy('name')->get(); // MODIFICATO
+        $associatedRiskIds = $activity->risks()->pluck('risks.id')->toArray(); // MODIFICATO
 
         $healthSurveillances = HealthSurveillance::orderBy('name')->get();
         $associatedHealthSurveillanceIds = $activity->healthSurveillances()->pluck('health_surveillances.id')->toArray();
         
-        $safetyCourses = SafetyCourse::orderBy('name')->get(); // <-- Recupera tutti i corsi
-        $associatedSafetyCourseIds = $activity->safetyCourses()->pluck('safety_courses.id')->toArray(); // <-- ID dei corsi associati
+        $safetyCourses = SafetyCourse::orderBy('name')->get();
+        $associatedSafetyCourseIds = $activity->safetyCourses()->pluck('safety_courses.id')->toArray();
 
         return view('activities.edit', compact(
             'activity',
-            'ppes', 'associatedPpeIds',
+            'allRisks', 'associatedRiskIds', // MODIFICATO
             'healthSurveillances', 'associatedHealthSurveillanceIds',
-            'safetyCourses', 'associatedSafetyCourseIds' // <-- Passa i dati alla vista
+            'safetyCourses', 'associatedSafetyCourseIds'
         ));
     }
 
@@ -121,24 +122,23 @@ class ActivityController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255|unique:activities,name,' . $activity->id,
             'description' => 'nullable|string',
-            'ppe_ids' => 'nullable|array',
-            'ppe_ids.*' => 'exists:ppes,id',
+            'risk_ids' => 'nullable|array', // MODIFICATO
+            'risk_ids.*' => 'exists:risks,id', // MODIFICATO
             'health_surveillance_ids' => 'nullable|array',
             'health_surveillance_ids.*' => 'exists:health_surveillances,id',
-            'safety_course_ids' => 'nullable|array', // <-- Validazione per i corsi
-            'safety_course_ids.*' => 'exists:safety_courses,id', // <-- Validazione per i corsi
+            'safety_course_ids' => 'nullable|array',
+            'safety_course_ids.*' => 'exists:safety_courses,id',
         ]);
-
         try {
             DB::beginTransaction();
             $activity->update([
                 'name' => $validatedData['name'],
                 'description' => $validatedData['description'],
             ]);
-
-            $activity->ppes()->sync($request->input('ppe_ids', []));
+            
+            $activity->risks()->sync($request->input('risk_ids', [])); // MODIFICATO
             $activity->healthSurveillances()->sync($request->input('health_surveillance_ids', []));
-            $activity->safetyCourses()->sync($request->input('safety_course_ids', [])); // <-- Sincronizza i corsi
+            $activity->safetyCourses()->sync($request->input('safety_course_ids', []));
 
             DB::commit();
             return redirect()->route('activities.index')->with('success', 'Attività aggiornata con successo e associazioni aggiornate.');
@@ -157,9 +157,9 @@ class ActivityController extends Controller
         try {
             DB::beginTransaction();
             $activity->profiles()->detach();
-            $activity->ppes()->detach();
+            $activity->risks()->detach(); // MODIFICATO da ppes()
             $activity->healthSurveillances()->detach();
-            $activity->safetyCourses()->detach(); // <-- Stacca i corsi prima di eliminare
+            $activity->safetyCourses()->detach();
 
             $activity->delete();
             DB::commit();

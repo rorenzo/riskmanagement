@@ -53,17 +53,32 @@
                     </div>
                 </div>
 
-                {{-- Card DPI Associati --}}
+                {{-- Card Rischi Associati e DPI Conseguenti --}}
                 <div class="col-md-6 mb-4">
                     <div class="card shadow-sm h-100">
-                        <div class="card-header"><h5 class="mb-0">{{ __('DPI Associati') }}</h5></div>
+                        <div class="card-header"><h5 class="mb-0">{{ __('Rischi Associati e DPI Conseguenti') }}</h5></div>
                         <div class="card-body">
-                            @if($activity->ppes && $activity->ppes->count() > 0)
-                                @foreach($activity->ppes as $ppe)
-                                    <a href="{{ route('ppes.show', $ppe->id) }}" class="badge bg-primary text-decoration-none me-1 mb-1">{{ $ppe->name }}</a>
+                            @if($activity->risks && $activity->risks->isNotEmpty())
+                                @foreach($activity->risks as $risk)
+                                    <div class="mb-3">
+                                        <h6 class="mb-1">
+                                            <a href="{{ route('risks.show', $risk->id) }}">{{ $risk->name }}</a>
+                                        </h6>
+                                        @if($risk->ppes && $risk->ppes->isNotEmpty())
+                                            <div class="ps-2">
+                                                <small class="text-muted d-block mb-1">{{ __('DPI per questo rischio:') }}</small>
+                                                @foreach($risk->ppes as $ppe)
+                                                    <a href="{{ route('ppes.show', $ppe->id) }}" class="badge bg-secondary text-decoration-none me-1 mb-1">{{ $ppe->name }}</a>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <p class="ps-2 mb-0"><small class="text-muted">{{ __('Nessun DPI specifico elencato per questo rischio.') }}</small></p>
+                                        @endif
+                                    </div>
+                                    @if(!$loop->last) <hr class="my-2"> @endif
                                 @endforeach
                             @else
-                                <p class="text-muted">{{ __('Nessun DPI associato a questa attività.') }}</p>
+                                <p class="text-muted">{{ __('Nessun rischio (e quindi nessun DPI derivato da rischi) associato a questa attività.') }}</p>
                             @endif
                         </div>
                     </div>

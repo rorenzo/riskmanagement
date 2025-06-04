@@ -51,9 +51,11 @@
                         <table id="profilesTable" class="table table-striped table-hover" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th>{{ __('Grado') }}</th>
+                                    <th>{{ __('Grado Categoria/Profilo') }}</th>
                                     <th>{{ __('Nome') }}</th>
                                     <th>{{ __('Cognome') }}</th>
+                                                    <th>{{ __('Mansione S.P.P.') }}</th> {{-- NUOVA ETICHETTA / COLONNA --}}
+
                                     <th>{{ __('Sezione Corrente') }}</th>
                                     <th>{{ __('Ufficio Corrente') }}</th>
                                     <th class="text-center">{{ __('Azioni') }}</th>
@@ -111,6 +113,8 @@
                             { data: 'grado', name: 'grado', defaultContent: 'N/D' },
                             { data: 'nome', name: 'nome' },
                             { data: 'cognome', name: 'cognome' },
+                                                    { data: 'mansione_spp_display', name: 'mansione', defaultContent: 'N/D' }, // COLONNA AGGIUNTA/MODIFICATA
+
                             { data: 'current_section_name', name: 'current_section_name', orderable: true, searchable: true, defaultContent: 'N/D' },
                             { data: 'current_office_name', name: 'current_office_name', orderable: true, searchable: true, defaultContent: 'N/D' },
                             {

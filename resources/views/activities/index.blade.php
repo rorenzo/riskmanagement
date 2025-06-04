@@ -28,7 +28,7 @@
                                     <th>{{ __('Nome Attività') }}</th>
                                     <th>{{ __('Descrizione') }}</th>
                                     <th class="text-center">{{ __('N. Profili Associati') }}</th>
-                                    <th class="text-center">{{ __('N. DPI Associati') }}</th>
+                                    <th class="text-center">{{ __('N. Rischi Associati') }}</th>
                                     <th class="text-center">{{ __('N. Sorv. Sanitarie Associate') }}</th>
                                                                         <th class="text-center">{{ __('N. Corsi') }}</th> {{-- NUOVA COLONNA --}}
                                     <th class="text-center no-sort">{{ __('Profili') }}</th>
@@ -41,7 +41,7 @@
                                         <td>{{ $activity->name }}</td>
                                         <td>{{ Str::limit($activity->description, 60) }}</td>
                                         <td class="text-center">{{ $activity->profiles_count ?? $activity->profiles->count() }}</td>
-                                        <td class="text-center">{{ $activity->ppes_count ?? $activity->ppes->count() }}</td>
+<td class="text-center">{{ $activity->risks_count ?? $activity->risks->count() }}</td> {{-- MODIFICATO --}}
                                         <td class="text-center">{{ $activity->health_surveillances_count ?? $activity->healthSurveillances->count() }}</td>
                                                                                <td class="text-center">{{ $activity->safety_courses_count }}</td> {{-- NUOVA CELLA CON IL CONTEGGIO --}}
 

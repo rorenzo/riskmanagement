@@ -20,6 +20,17 @@ class Profile extends Model {
         'capo sezione' => 'Capo Sezione',
         'addetto' => 'Addetto',
     ];
+    
+    // NUOVA COSTANTE PER MANSIONI S.P.P.
+    public const MANSIONI_SPP_DISPONIBILI = [
+        'datore_lavoro' => 'Datore di Lavoro',
+        'dirigente' => 'Dirigente',
+        'preposto' => 'Preposto',
+        'lavoratore' => 'Lavoratore',
+        'rspp' => 'RSPP', // Responsabile del Servizio di Prevenzione e Protezione
+        'aspp' => 'ASPP', // Addetto al Servizio di Prevenzione e Protezione
+    ];
+
 
     protected $fillable = [
         'grado',
@@ -113,5 +124,11 @@ class Profile extends Model {
                         'id'
                 )->withPivot('assignment_type', 'reason')
                 ->withTimestamps();
+    }
+    
+    // Accessor per visualizzare il nome leggibile della mansione S.P.P. (opzionale ma utile)
+    public function getMansioneSppDisplayNameAttribute(): ?string
+    {
+        return self::MANSIONI_SPP_DISPONIBILI[$this->mansione] ?? $this->mansione;
     }
 }

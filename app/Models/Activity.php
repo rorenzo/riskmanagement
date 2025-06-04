@@ -25,20 +25,11 @@ class Activity extends Model {
                         ->withTimestamps(); // Se la tabella pivot ha timestamps
     }
 
-    /**
-     * I DPI associati a questa attività.
-     */
-     public function ppes(): BelongsToMany // Personal Protective Equipments
+
+    
+    public function risks(): BelongsToMany
     {
-        return $this->belongsToMany(
-            PPE::class,             // Modello correlato
-            'activity_ppe',         // Nome della tabella pivot
-            'activity_id',          // Chiave esterna del modello corrente (Activity) sulla tabella pivot
-            'ppe_id',               // Chiave esterna del modello correlato (PPE) sulla tabella pivot
-            'id',                   // Chiave primaria del modello corrente (Activity)
-            'id'                    // Chiave primaria del modello correlato (PPE)
-        );
-        // ->withTimestamps(); // Aggiungi se la tabella pivot ha timestamps
+        return $this->belongsToMany(Risk::class, 'activity_risk');
     }
 
     /**

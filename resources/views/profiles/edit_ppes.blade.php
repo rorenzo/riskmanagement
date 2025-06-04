@@ -50,22 +50,26 @@
                                 <div class="ppe-assignment-row {{ $ppe['highlight_as_missing_requirement'] ? 'table-danger' : '' }}">
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div class="ppe-details">
-                                            <h5>{{ $ppe['name'] }}</h5>
-                                            @if($ppe['description'])
-                                                <p class="mb-1 text-muted" style="font-size: 0.9em;">{{ $ppe['description'] }}</p>
-                                            @endif
-                                            @if($ppe['is_required_by_activity'])
-                                                <p class="required-info mb-1">
-                                                    <i class="fas fa-exclamation-triangle text-warning me-1"></i>
-                                                    {{ $ppe['requiring_activities_string'] }}
-                                                </p>
-                                            @endif
-                                            @if($ppe['is_manually_assigned'] && $ppe['last_manually_assigned_date'])
-                                                <p class="required-info mb-0">
-                                                    Ultima assegnazione manuale: {{ $ppe['last_manually_assigned_date'] }}
-                                                </p>
-                                            @endif
-                                        </div>
+                <h5>{{ $ppe['name'] }}</h5>
+                @if($ppe['description'])
+                    <p class="mb-1 text-muted" style="font-size: 0.9em;">{{ $ppe['description'] }}</p>
+                @endif
+                {{-- Mostra se è richiesto da attività/rischio --}}
+                @if($ppe['is_required_by_activity_risk']) 
+                    <p class="required-info mb-1 {{ $ppe['highlight_as_missing_requirement'] ? 'text-danger fw-bold' : 'text-info' }}">
+                        <i class="fas fa-exclamation-triangle {{ $ppe['highlight_as_missing_requirement'] ? 'text-danger' : 'text-info' }} me-1"></i>
+                        {{ $ppe['requiring_sources_string'] }}
+                        @if($ppe['highlight_as_missing_requirement'])
+                           ({{__('Attualmente non assegnato manualmente')}})
+                        @endif
+                    </p>
+                @endif
+                @if($ppe['is_manually_assigned'] && $ppe['last_manually_assigned_date'])
+                    <p class="required-info mb-0">
+                        {{__('Ultima assegnazione manuale:')}} {{ $ppe['last_manually_assigned_date'] }}
+                    </p>
+                @endif
+            </div>
                                         <div class="ppe-assignment-actions checkbox-styled-button">
                                             <div class="form-check form-switch">
                                                 {{-- Usiamo un nome che invii solo gli ID dei checkbox spuntati --}}
