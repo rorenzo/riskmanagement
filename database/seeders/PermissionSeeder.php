@@ -10,11 +10,10 @@ class PermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions(); // 
 
-        // Nomi chiave dei modelli/risorse (singolare, camelCase o snake_case come preferisci, ma sii consistente)
-        // Userò camelCase qui per mappare più facilmente ai nomi dei modelli.
-        $resourceKeys = [
+        // Nomi chiave dei modelli/risorse
+        $resourceKeys = [ // 
             'profile',              // Anagrafica (Profile)
             'office',               // Ufficio
             'section',              // Sezione
@@ -27,28 +26,31 @@ class PermissionSeeder extends Seeder
             'user',                 // Utenti del portale (gestiti in Admin)
             'role',                 // Ruoli (gestiti in Admin)
             'permission',           // Permessi (gestiti in Admin, principalmente visualizzazione)
-            'risk',
-        ];
+            'risk',                 // Rischi
+        ]; //
 
         // Azioni CRUD standard
-        $actions = ['viewAny', 'view', 'create', 'update', 'delete', 'restore', 'forceDelete'];
+        $actions = ['viewAny', 'view', 'create', 'update', 'delete', 'restore', 'forceDelete']; // 
 
-        foreach ($resourceKeys as $resourceKey) {
-            foreach ($actions as $action) {
-                // es. "viewAny profile", "create ppe", "update safetyCourse"
+        foreach ($resourceKeys as $resourceKey) { // 
+            foreach ($actions as $action) { // 
                 // Il nome del permesso sarà "azione nome_risorsa_in_snake_case_con_spazi"
-                $permissionName = $action . ' ' . str_replace('_', ' ', Str::snake($resourceKey));
-                Permission::firstOrCreate(['name' => $permissionName, 'guard_name' => 'web']);
+                $permissionName = $action . ' ' . str_replace('_', ' ', Str::snake($resourceKey)); //
+                Permission::firstOrCreate(['name' => $permissionName, 'guard_name' => 'web']); // 
             }
         }
 
         // Permessi specifici per funzionalità/report
-        Permission::firstOrCreate(['name' => 'view report scadenze_sorveglianza', 'guard_name' => 'web']);
-        Permission::firstOrCreate(['name' => 'view report movimenti', 'guard_name' => 'web']);
-        // Permesso generico per accedere al pannello di amministrazione (opzionale, ma utile)
-        Permission::firstOrCreate(['name' => 'access admin_panel', 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => 'view report scadenze_sorveglianza', 'guard_name' => 'web']); // 
+        Permission::firstOrCreate(['name' => 'view report movimenti', 'guard_name' => 'web']); // 
+        Permission::firstOrCreate(['name' => 'access admin_panel', 'guard_name' => 'web']); // 
 
+        // Azioni aggiuntive specifiche per Profile (Anagrafica)
+        Permission::firstOrCreate(['name' => 'terminate employment profile', 'guard_name' => 'web']); // 
+        Permission::firstOrCreate(['name' => 'create new_employment profile', 'guard_name' => 'web']); // 
+        // 'restore profile' e 'forceDelete profile' sono già coperti dalle azioni CRUD standard
+        Permission::firstOrCreate(['name' => 'viewAny archived_profiles', 'guard_name' => 'web']); // 
 
-        $this->command->info('Permessi base e specifici creati/verificati.');
+        $this->command->info('Permessi base e specifici creati/verificati.'); // 
     }
 }

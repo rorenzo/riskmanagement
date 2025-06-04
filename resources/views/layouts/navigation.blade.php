@@ -56,6 +56,14 @@
         {{ __('Rischi') }}
     </a>
 </li>
+
+@can('viewAny archived_profiles') 
+<li>
+    <a class="nav-link {{ request()->routeIs('admin.profiles.archived_index') ? 'active' : '' }}" href="{{ route('admin.profiles.archived_index') }}">
+        {{ __('Archivio Profili') }}
+    </a>
+</li>
+@endcan
             </ul>
 
             {{-- Menu Utente a Destra --}}
