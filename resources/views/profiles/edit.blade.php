@@ -113,11 +113,6 @@
                                 @error('luogo_nascita_provincia') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-2 mb-3">
-                                <label for="luogo_nascita_cap" class="form-label">{{ __('CAP') }}</label>
-                                <input type="text" class="form-control @error('luogo_nascita_cap') is-invalid @enderror" id="luogo_nascita_cap" name="luogo_nascita_cap" value="{{ old('luogo_nascita_cap', $profile->luogo_nascita_cap) }}" maxlength="5">
-                                @error('luogo_nascita_cap') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
-                            <div class="col-md-2 mb-3">
                                 <label for="luogo_nascita_nazione" class="form-label">{{ __('Nazione') }}</label>
                                 <input type="text" class="form-control @error('luogo_nascita_nazione') is-invalid @enderror" id="luogo_nascita_nazione" name="luogo_nascita_nazione" value="{{ old('luogo_nascita_nazione', $profile->luogo_nascita_nazione) }}">
                                 @error('luogo_nascita_nazione') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -125,7 +120,7 @@
                         </div>
 
                         <hr class="my-4">
-                        <h5 class="card-title mb-3">{{ __('Luogo di Residenza') }}</h5>
+                        <h5 class="card-title mb-3">{{ __('Luogo di Residenza/Domicilio') }}</h5>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="residenza_via" class="form-label">{{ __('Via/Piazza') }}</label>
@@ -219,6 +214,9 @@
 
                         <div class="mt-4">
                             <button type="submit" class="btn btn-primary">{{ __('Aggiorna Profilo') }}</button>
+                            <button type="submit" name="action" value="save_and_show" class="btn btn-info me-2">
+                                {{ __('Salva e vai alla Scheda') }}
+                            </button>
                             <a href="{{ route('profiles.show', $profile->id) }}" class="btn btn-secondary">{{ __('Annulla') }}</a>
                         </div>
                     </form>

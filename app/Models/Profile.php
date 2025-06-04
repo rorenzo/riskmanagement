@@ -39,7 +39,6 @@ class Profile extends Model {
         'sesso',
         'luogo_nascita_citta',
         'luogo_nascita_provincia',
-        'luogo_nascita_cap',
         'luogo_nascita_nazione',
         'data_nascita',
         'email',

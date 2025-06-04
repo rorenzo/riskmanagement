@@ -187,7 +187,6 @@ class AnagraficaController extends Controller
             'sesso' => 'nullable|in:M,F,Altro',
             'luogo_nascita_citta' => 'nullable|string|max:255',
             'luogo_nascita_provincia' => 'nullable|string|max:2',
-            'luogo_nascita_cap' => 'nullable|string|max:5',
             'luogo_nascita_nazione' => 'nullable|string|max:255',
             'data_nascita' => 'nullable|date_format:Y-m-d',
             'email' => 'nullable|email|max:255|unique:profiles,email',
@@ -212,36 +211,43 @@ class AnagraficaController extends Controller
             $profileDataForCreate = collect($validatedData)->except([
                 'current_section_id', 'data_inizio_assegnazione', 'note_assegnazione', 'activity_ids'
             ])->toArray();
-            $profile = Profile::create($profileDataForCreate);
+            $profile = Profile::create($profileDataForCreate); // [cite: 372]
 
-            if (!empty($validatedData['current_section_id']) && !empty($validatedData['data_inizio_assegnazione'])) {
-                EmploymentPeriod::create([
+            if (!empty($validatedData['current_section_id']) && !empty($validatedData['data_inizio_assegnazione'])) { // [cite: 372]
+                EmploymentPeriod::create([ // [cite: 372]
                     'profile_id' => $profile->id,
                     'data_inizio_periodo' => $validatedData['data_inizio_assegnazione'],
                     'data_fine_periodo' => null,
-                    'tipo_ingresso' => 'Assunzione/Primo Impiego',
+                    'tipo_ingresso' => 'Assunzione/Primo Impiego', // [cite: 373]
                     'note_periodo' => $validatedData['note_assegnazione'] ?? 'Periodo di impiego iniziale.',
                 ]);
-                $profile->sectionHistory()->attach($validatedData['current_section_id'], [
+                $profile->sectionHistory()->attach($validatedData['current_section_id'], [ // [cite: 374]
                     'data_inizio_assegnazione' => $validatedData['data_inizio_assegnazione'],
                     'data_fine_assegnazione' => null,
                     'note' => $validatedData['note_assegnazione'] ?? 'Assegnazione iniziale.',
                 ]);
             }
 
-            if (array_key_exists('activity_ids', $validatedData)) {
-                $profile->activities()->sync($validatedData['activity_ids'] ?? []);
+            if (array_key_exists('activity_ids', $validatedData)) { // [cite: 375]
+                $profile->activities()->sync($validatedData['activity_ids'] ?? []); // [cite: 375]
             } else {
-                $profile->activities()->detach();
+                $profile->activities()->detach(); // [cite: 376]
             }
-            // Non c'è più la sincronizzazione automatica dei DPI qui
-
             DB::commit();
-            return redirect()->route('profiles.index')->with('success', 'Profilo creato con successo.');
+
+            // MODIFICA PER IL REINDIRIZZAMENTO
+            $action = $request->input('action');
+
+            if ($action === 'save_and_show') {
+                return redirect()->route('profiles.show', $profile->id)->with('success', 'Profilo creato con successo.');
+            } else { 
+                return redirect()->route('profiles.index')->with('success', 'Profilo creato con successo.'); // [cite: 378]
+            }
+
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Errore creazione profilo: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
-            return back()->withInput()->with('error', 'Errore durante la creazione del profilo: ' . $e->getMessage());
+            DB::rollBack(); // [cite: 379]
+            Log::error('Errore creazione profilo: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString()); // [cite: 379]
+            return back()->withInput()->with('error', 'Errore durante la creazione del profilo: ' . $e->getMessage()); // [cite: 380]
         }
     }
 
@@ -517,7 +523,6 @@ $incarichiRule = Rule::in(array_keys(Profile::INCARICHI_DISPONIBILI)); // [cite:
             'sesso' => 'nullable|in:M,F,Altro',
             'luogo_nascita_citta' => 'nullable|string|max:255',
             'luogo_nascita_provincia' => 'nullable|string|max:2',
-            'luogo_nascita_cap' => 'nullable|string|max:5',
             'luogo_nascita_nazione' => 'nullable|string|max:255',
             'data_nascita' => 'nullable|date_format:Y-m-d',
             'email' => ['nullable', 'email', 'max:255', Rule::unique('profiles')->ignore($profile->id)], // [cite: 445]
@@ -563,7 +568,15 @@ $incarichiRule = Rule::in(array_keys(Profile::INCARICHI_DISPONIBILI)); // [cite:
             // NESSUNA chiamata a syncProfilePpes per assegnazione automatica DPI
 
             DB::commit();
-            return redirect()->route('profiles.show', $profile->id)->with('success', 'Profilo aggiornato con successo.');
+            // MODIFICA PER IL REINDIRIZZAMENTO
+            $action = $request->input('action');
+
+            if ($action === 'save_and_show') {
+                return redirect()->route('profiles.show', $profile->id)->with('success', 'Profilo creato con successo.');
+            } else { 
+                return redirect()->route('profiles.index')->with('success', 'Profilo creato con successo.'); // [cite: 378]
+            }
+            
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Errore aggiornamento profilo: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());

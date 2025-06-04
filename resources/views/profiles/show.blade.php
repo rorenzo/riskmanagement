@@ -37,7 +37,6 @@
                                     <p><strong>{{ __('Luogo di Nascita') }}:</strong>
                                         {{ $profile->luogo_nascita_citta ?? '' }}
                                         {{ $profile->luogo_nascita_provincia ? '(' . $profile->luogo_nascita_provincia . ')' : '' }}
-                                        {{ $profile->luogo_nascita_cap ? '- ' . $profile->luogo_nascita_cap : '' }}
                                         <small>({{ $profile->luogo_nascita_nazione ?? 'Italia' }})</small>
                                     </p>
                                     <p><strong>{{ __('Email') }}:</strong> {{ $profile->email ?? __('N/D') }}</p>
@@ -56,7 +55,7 @@
                             </div>
                             {{-- ... (Residenza) ...--}}
                              <hr>
-                            <h6>{{ __('Residenza') }}</h6>
+                            <h6>{{ __('Residenza/Domicilio') }}</h6>
                             <p>
                                 {{ $profile->residenza_via ?? __('Via non specificata') }},
                                 {{ $profile->residenza_citta ?? __('Città non specificata') }}
@@ -246,7 +245,7 @@
              <div class="card shadow-sm mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">{{ __('Gestione Sorveglianza Sanitaria') }}</h5>
-                    @can ("create healthCheckRecord")
+                    @can ("create health check record")
                     <a href="{{ route('profiles.health-check-records.create', $profile->id) }}" class="btn btn-success btn-sm">
                         <i class="fas fa-plus me-1"></i> {{ __('Registra Visita') }}
                     </a>
@@ -282,28 +281,31 @@
                                     <td class="text-center">
                                         @if(!$hsData['has_record'])
                                         <span class="badge bg-danger">{{ __('Visita Mancante') }}</span>
-                                        @can("create healthCheckRecord")
+                                        @can("create health check record")
                                         <a href="{{ route('profiles.health-check-records.create', ['profile' => $profile->id, 'health_surveillance_id' => $hsData['id']]) }}" class="btn btn-xs btn-outline-success ms-1" title="{{ __('Registra Visita per ') }}{{ $hsData['name'] }}">
                                             <i class="fas fa-plus-circle"></i>
                                         </a>
                                         @endcan
                                         @elseif($hsData['is_expired'])
                                         <span class="badge bg-danger">{{ __('Scaduta') }}</span>
-                                        @if($hsData['record_id']) @can("update healthCheckRecord")
+                                        @if($hsData['record_id'])
+                                        @can("update health check record")
                                         <a href="{{ route('health-check-records.edit', $hsData['record_id']) }}" class="btn btn-xs btn-outline-primary ms-1" title="{{ __('Modifica Visita Scaduta') }}">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        @endcan @endif
+                                        @endcan
+                                        @endif
                                         @elseif($hsData['expiration_date'] && \Carbon\Carbon::createFromFormat('d/m/Y', $hsData['expiration_date'])->isBetween(now(), now()->addMonths(2)))
                                         <span class="badge bg-warning text-dark">{{ __('In Scadenza') }}</span>
-                                        @if($hsData['record_id']) @can("update healthCheckRecord")
+                                        @if($hsData['record_id']) @can("update health check record")
                                         <a href="{{ route('health-check-records.edit', $hsData['record_id']) }}" class="btn btn-xs btn-outline-primary ms-1" title="{{ __('Modifica Visita In Scadenza') }}">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         @endcan @endif
                                         @else
                                         <span class="badge bg-success">{{ __('Valida') }}</span>
-                                        @if($hsData['record_id']) @can("update healthCheckRecord")
+                                        @if($hsData['record_id'])
+                                        @can("update health check record")
                                         <a href="{{ route('health-check-records.edit', $hsData['record_id']) }}" class="btn btn-xs btn-outline-primary ms-1" title="{{ __('Modifica Visita Valida') }}">
                                             <i class="fas fa-edit"></i>
                                         </a>
@@ -352,7 +354,7 @@
                                         @endif
                                     </td>
                                     <td class="text-center">
-                                        @can("update healthCheckRecord")
+                                        @can("update health check record")
                                         <a href="{{ route('health-check-records.edit', $recordData['id']) }}" class="btn btn-xs btn-outline-primary" title="{{__('Modifica Visita')}}">
                                             <i class="fas fa-edit"></i>
                                         </a>
@@ -372,7 +374,7 @@
             <div class="card shadow-sm mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">{{ __('Formazione Sicurezza') }}</h5>
-                    @can ("create profileSafetyCourse")
+                    @can ("create profile safety course")
                     <a href="{{ route('profiles.course_attendances.create', $profile->id) }}" class="btn btn-success btn-sm">
                         <i class="fas fa-plus me-1"></i> {{ __('Registra Frequenza Corso') }}
                     </a>
@@ -408,7 +410,7 @@
                                     <td class="text-center">
                                         @if(!$courseData['is_attended'])
                                         <span class="badge bg-danger">{{ __('Non Frequentato') }}</span>
-                                        @can ("create profileSafetyCourse")
+                                        @can ("create profile safety course")
                                         <a href="{{ route('profiles.course_attendances.create', ['profile' => $profile->id, 'safety_course_id' => $courseData['id']]) }}" class="btn btn-xs btn-outline-success ms-1" title="{{__('Registra Frequenza per')}} {{ $courseData['name'] }}">
                                             <i class="fas fa-plus-circle"></i>
                                         </a>
@@ -422,7 +424,7 @@
                                             <span class="badge bg-success">{{ __('Valido') }}</span>
                                             @endif
                                             @if($courseData['attendance_pivot_id'])
-                                                @can ("update profileSafetyCourse")
+                                                @can ("update profile safety course")
                                                 <a href="{{ route('course_attendances.edit', $courseData['attendance_pivot_id']) }}" class="btn btn-xs btn-outline-primary ms-1" title="{{__('Modifica Frequenza')}}">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
@@ -472,7 +474,7 @@
                                         @endif
                                     </td>
                                     <td class="text-center">
-                                        @can ("update profileSafetyCourse")
+                                        @can ("update profile safety course")
                                             @if($courseData['attendance_pivot_id'])
                                             <a href="{{ route('course_attendances.edit', $courseData['attendance_pivot_id']) }}" class="btn btn-xs btn-outline-primary" title="{{__('Modifica Frequenza')}}">
                                                 <i class="fas fa-edit"></i>

@@ -20,7 +20,6 @@ return new class extends Migration
 
             $table->string('luogo_nascita_citta')->nullable();
             $table->string('luogo_nascita_provincia', 2)->nullable();
-            $table->string('luogo_nascita_cap', 5)->nullable();
             $table->string('luogo_nascita_nazione')->nullable()->default('Italia');
             $table->date('data_nascita')->nullable();
 
