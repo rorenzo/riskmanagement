@@ -14,39 +14,36 @@ use App\Models\ProfileSafetyCourse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Barryvdh\DomPDF\Facade\Pdf; // Importa il Facade PDF
-use Carbon\Carbon; // Per la data
-use Illuminate\Support\Facades\App; // Aggiunto per localizzazione PDF
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Collection;
 
 
 class AnagraficaController extends Controller
 {
-
     public function __construct()
     {
-        $resourceName = 'profile'; // Chiave usata in PermissionSeeder
-        $permissionBaseName = str_replace('_', ' ', Str::snake($resourceName)); // es. "profile"
+        $resourceName = 'profile'; 
+        $permissionBaseName = str_replace('_', ' ', Str::snake($resourceName));
 
-        $this->middleware('permission:viewAny ' . $permissionBaseName . '|view ' . $permissionBaseName, ['only' => ['index', 'show', 'data']]);
+        // Aggiornato per includere i nuovi nomi dei metodi se necessario
+        $this->middleware('permission:viewAny ' . $permissionBaseName . '|view ' . $permissionBaseName, ['only' => ['index', 'show', 'data', 'indexWithCourseIssues', 'indexWithHealthRecordIssues']]);
         $this->middleware('permission:create ' . $permissionBaseName, ['only' => ['create', 'store']]);
         $this->middleware('permission:delete ' . $permissionBaseName, ['only' => ['destroy']]);
-
-        // Permessi per operazioni di aggiornamento granulari
         $this->middleware('permission:update ' . $permissionBaseName, [
             'only' => [
-                'edit', 'update', // Modifica anagrafica base
+                'edit', 'update', 
                 'createEmploymentPeriodForm', 'storeEmploymentPeriod',
                 'editSectionAssignmentForm', 'updateSectionAssignment',
                 'editPpes', 'updatePpes',
-                'editActivities', 'updateActivities', // NUOVI METODI AGGIUNTI QUI
+                'editActivities', 'updateActivities',
             ]
         ]);
-
-        // Permessi specifici
         $this->middleware('permission:create new_employment profile', ['only' => ['createEmploymentPeriodForm', 'storeEmploymentPeriod']]);
         $this->middleware('permission:terminate employment profile', ['only' => ['createTransferOutForm', 'storeTransferOut']]);
         $this->middleware('permission:viewAny archived_profiles', ['only' => ['archivedIndex', 'archivedData']]);
@@ -54,9 +51,8 @@ class AnagraficaController extends Controller
         $this->middleware('permission:forceDelete profile', ['only' => ['forceDelete']]);
     }
 
-    // ... metodi index, data, create, store ...
-    // (come nella versione precedente del file laravel_anagrafica_controller_permission_fix)
-    public function index()
+
+    public function index(Request $request)
     {
         $allSections = Section::with('office')->orderBy('nome')->get();
         $sectionsForFilter = $allSections->mapWithKeys(function ($section) {
@@ -75,20 +71,13 @@ class AnagraficaController extends Controller
         return view('profiles.index', compact('sectionsForFilter', 'userPermissions'));
     }
 
-    /**
-     * Fornisce i dati per la tabella DataTables dei profili ATTIVI.
-     * Un profilo è considerato attivo se non è soft-deleted e ha almeno
-     * un periodo di impiego con data_fine_periodo NULL.
-     */
     public function data(Request $request)
     {
         try {
-            // CORREZIONE QUERY: Seleziona solo profili non soft-deleted
-            // e con almeno un periodo di impiego attivo.
             $baseQuery = Profile::query()
-                ->whereNull('profiles.deleted_at') // Assicura che il profilo non sia soft-deleted
+                ->whereNull('profiles.deleted_at') 
                 ->whereHas('employmentPeriods', function ($query) {
-                    $query->whereNull('data_fine_periodo'); // Deve avere un periodo di impiego attivo
+                    $query->whereNull('data_fine_periodo'); 
                 });
 
             $totalData = $baseQuery->clone()->count();
@@ -100,16 +89,12 @@ class AnagraficaController extends Controller
                 ->select(array_merge($qualifiedProfileColumns, [
                     'sections.nome as current_section_name',
                     'offices.nome as current_office_name',
-                    // Subquery per ottenere l'incarico e la mansione dal periodo di impiego ATTIVO più recente
-                    // Nota: Se un profilo potesse avere più periodi attivi contemporaneamente (non dovrebbe),
-                    // questa subquery potrebbe restituire risultati multipli concatenati.
-                    // Si assume che ci sia al massimo un periodo di impiego attivo.
                     DB::raw('(SELECT ep.incarico FROM employment_periods ep WHERE ep.profile_id = profiles.id AND ep.data_fine_periodo IS NULL AND ep.deleted_at IS NULL ORDER BY ep.data_inizio_periodo DESC LIMIT 1) as current_incarico'),
                     DB::raw('(SELECT ep.mansione FROM employment_periods ep WHERE ep.profile_id = profiles.id AND ep.data_fine_periodo IS NULL AND ep.deleted_at IS NULL ORDER BY ep.data_inizio_periodo DESC LIMIT 1) as current_mansione')
                 ]))
                 ->leftJoin('profile_section', function ($join) {
                     $join->on('profiles.id', '=', 'profile_section.profile_id')
-                            ->whereNull('profile_section.data_fine_assegnazione'); // Assegnazione sezione attiva
+                            ->whereNull('profile_section.data_fine_assegnazione'); 
                 })
                 ->leftJoin('sections', 'profile_section.section_id', '=', 'sections.id')
                 ->leftJoin('offices', 'sections.office_id', '=', 'offices.id');
@@ -126,9 +111,6 @@ class AnagraficaController extends Controller
                             ->orWhere('profiles.cognome', 'LIKE', "%{$searchValue}%")
                             ->orWhere('sections.nome', 'LIKE', "%{$searchValue}%")
                             ->orWhere('offices.nome', 'LIKE', "%{$searchValue}%")
-                            // Per cercare anche su incarico/mansione, sarebbe necessario un join esplicito
-                            // o una ricerca più complessa se i valori sono pre-calcolati come sopra.
-                            // Esempio con subquery (meno performante per la ricerca diretta):
                             ->orWhereExists(function ($subQuery) use ($searchValue) {
                                 $subQuery->select(DB::raw(1))
                                          ->from('employment_periods as ep_search')
@@ -155,21 +137,21 @@ class AnagraficaController extends Controller
                         'grado' => 'profiles.grado',
                         'nome' => 'profiles.nome',
                         'cognome' => 'profiles.cognome',
-                        'current_section_name' => 'sections.nome', // Ordinamento per nome sezione
-                        'current_office_name' => 'offices.nome',   // Ordinamento per nome ufficio
-                        'mansione_spp_display' => 'current_mansione', // Ordinamento per mansione (dalla subquery)
-                        'incarico_display' => 'current_incarico',    // Ordinamento per incarico (dalla subquery)
+                        'current_section_name' => 'sections.nome', 
+                        'current_office_name' => 'offices.nome',  
+                        'mansione_spp_display' => 'current_mansione', 
+                        'incarico_display' => 'current_incarico',   
                     ];
                     if (array_key_exists($columnToSort, $sortMapping)) {
                         $query->orderBy($sortMapping[$columnToSort], $orderDirection);
                     } else {
-                        $query->orderBy('profiles.cognome', 'asc')->orderBy('profiles.nome', 'asc'); // Default
+                        $query->orderBy('profiles.cognome', 'asc')->orderBy('profiles.nome', 'asc'); 
                     }
                 } else {
-                    $query->orderBy('profiles.cognome', 'asc')->orderBy('profiles.nome', 'asc'); // Default
+                    $query->orderBy('profiles.cognome', 'asc')->orderBy('profiles.nome', 'asc'); 
                 }
             } else {
-                $query->orderBy('profiles.cognome', 'asc')->orderBy('profiles.nome', 'asc'); // Default
+                $query->orderBy('profiles.cognome', 'asc')->orderBy('profiles.nome', 'asc'); 
             }
 
             if ($request->has('length') && $request->input('length') != -1) {
@@ -179,8 +161,6 @@ class AnagraficaController extends Controller
             $profiles = $query->get();
 
             $data = $profiles->map(function ($profile) {
-                // I valori di incarico e mansione sono già stati caricati come current_incarico e current_mansione
-                // dalle subquery nella select principale. Ora usiamo gli accessor dei display name.
                 $mansioneSppDisplayName = Profile::MANSIONI_SPP_DISPONIBILI[$profile->current_mansione] ?? $profile->current_mansione ?? __('N/D');
                 $incaricoDisplayName = Profile::INCARICHI_DISPONIBILI[$profile->current_incarico] ?? $profile->current_incarico ?? __('N/D');
 
@@ -206,7 +186,6 @@ class AnagraficaController extends Controller
             return response()->json([
                 'error' => 'Si è verificato un errore sul server.',
                 'message' => $e->getMessage(),
-                // 'trace' => $e->getTraceAsString() // Scommentare solo per debug approfondito
             ], 500);
         }
     }
@@ -250,7 +229,6 @@ class AnagraficaController extends Controller
             return back()->withInput()->with('error', __('Errore durante la creazione del profilo anagrafico:') . ' ' . $e->getMessage());
         }
     }
-
     public function show(Profile $profile)
     {
         Log::debug("--- Inizio AnagraficaController@show per Profilo ID: {$profile->id} ---");
@@ -280,8 +258,7 @@ class AnagraficaController extends Controller
             $incaricoAttualeDisplayName = $currentEmploymentPeriod->incarico_display_name;
             $mansioneAttualeDisplayName = $currentEmploymentPeriod->mansione_spp_display_name;
         }
-
-        // Logica DPI (invariata)
+        
         $tempRequiredPpesFromRisks = [];
         $activityRiskBasedRequiredPpeIds = [];
         if ($profile->relationLoaded('activities') && $profile->activities->isNotEmpty()) {
@@ -356,7 +333,6 @@ class AnagraficaController extends Controller
         }
         $otherManuallyAssignedPpesData = $otherManuallyAssignedPpesData->sortBy('name')->values();
 
-        // Logica Corsi (invariata)
         $tempRequiredCourses = [];
         $activityBasedRequiredCourseIds = [];
         if ($profile->relationLoaded('activities') && $profile->activities->isNotEmpty()) {
@@ -389,7 +365,7 @@ class AnagraficaController extends Controller
                 $isAttended = false; $isExpired = false; $pivotNotes = null; $pivotCertificate = null;
                 if ($latestAttendance && isset($latestAttendance->pivot) && $latestAttendance->pivot->attended_date) {
                     $isAttended = true;
-                    $attendancePivotId = $latestAttendance->pivot->id;
+                    $attendancePivotId = $latestAttendance->pivot->id; 
                     $attendedDateCarbon = Carbon::parse($latestAttendance->pivot->attended_date);
                     $attendedDate = $attendedDateCarbon->format('d/m/Y');
                     $pivotNotes = $latestAttendance->pivot->notes;
@@ -421,7 +397,6 @@ class AnagraficaController extends Controller
         }
         $otherAttendedCoursesData = $otherAttendedCoursesData->sortBy('name')->values();
 
-        // Logica Sorveglianza Sanitaria (invariata)
         $tempRequiredHS = [];
         $activityBasedRequiredHSIds = [];
         if ($profile->relationLoaded('activities') && $profile->activities->isNotEmpty()) {
@@ -447,14 +422,14 @@ class AnagraficaController extends Controller
         if (!empty($tempRequiredHS)) {
             foreach ($tempRequiredHS as $hsId => $data) {
                 $latestCheckUpRecord = null;
-                $recordId = null;
+                $recordId = null; 
                 if($profile->relationLoaded('healthCheckRecords')){ $latestCheckUpRecord = $profile->healthCheckRecords->where('health_surveillance_id', $hsId)->sortByDesc('check_up_date')->first(); }
                 $lastCheckUpDate = null;
                 $expirationDate = null;
                 $outcome = null; $notes = null; $hasRecord = false; $isExpired = false;
                 if ($latestCheckUpRecord) {
                     $hasRecord = true;
-                    $recordId = $latestCheckUpRecord->id;
+                    $recordId = $latestCheckUpRecord->id; 
                     $lastCheckUpDateCarbon = Carbon::parse($latestCheckUpRecord->check_up_date);
                     $lastCheckUpDate = $lastCheckUpDateCarbon->format('d/m/Y');
                     $outcome = $latestCheckUpRecord->outcome;
@@ -495,7 +470,6 @@ class AnagraficaController extends Controller
         ));
     }
 
-
     public function edit(Profile $profile)
     {
         $this->authorize('update profile', $profile);
@@ -535,7 +509,6 @@ class AnagraficaController extends Controller
             return back()->withInput()->with('error', __('Errore durante l\'aggiornamento dei dati anagrafici:') . ' ' . $e->getMessage());
         }
     }
-
     public function createEmploymentPeriodForm(Profile $profile)
     {
         $this->authorize('create new_employment profile');
@@ -605,8 +578,7 @@ class AnagraficaController extends Controller
             return back()->withInput()->with('error', __('Errore durante la registrazione del nuovo periodo di impiego:') . ' ' . $e->getMessage());
         }
     }
-
-    public function editSectionAssignmentForm(Profile $profile)
+     public function editSectionAssignmentForm(Profile $profile)
     {
         $this->authorize('update profile', $profile);
         if (!$profile->isCurrentlyEmployed()) {
@@ -615,7 +587,7 @@ class AnagraficaController extends Controller
         $sections = Section::with('office')->orderBy('nome')->get();
         $currentSectionAssignment = $profile->getCurrentSectionAssignmentWithPivot();
         $current_section_id = $currentSectionAssignment ? $currentSectionAssignment->id : null;
-        $latestEmploymentPeriod = $profile->getCurrentEmploymentPeriod();
+        $latestEmploymentPeriod = $profile->getCurrentEmploymentPeriod(); 
         return view('profiles.form_section_assignment', compact('profile', 'sections', 'current_section_id', 'currentSectionAssignment', 'latestEmploymentPeriod'));
     }
 
@@ -627,7 +599,7 @@ class AnagraficaController extends Controller
             return redirect()->route('profiles.show', $profile->id)->with('error', __('Impossibile aggiornare l\'assegnazione: nessun periodo di impiego attivo.'));
         }
         $validatedData = $request->validate([
-            'section_id' => 'nullable|exists:sections,id',
+            'section_id' => 'nullable|exists:sections,id', 
             'data_inizio_assegnazione' => 'required_with:section_id|nullable|date_format:Y-m-d|after_or_equal:' . $currentEmployment->data_inizio_periodo->format('Y-m-d'),
             'note_assegnazione' => 'nullable|string',
         ]);
@@ -640,33 +612,35 @@ class AnagraficaController extends Controller
             $attuale_section_id_attiva = $attualeAssegnazioneAttiva ? $attualeAssegnazioneAttiva->id : null;
             $data_inizio_attuale_assegnazione = $attualeAssegnazioneAttiva ? Carbon::parse($attualeAssegnazioneAttiva->pivot->data_inizio_assegnazione) : null;
 
-            if ($nuova_section_id && $data_nuova_assegnazione_str) {
+            if ($nuova_section_id && $data_nuova_assegnazione_str) { 
                 $data_nuova_assegnazione = Carbon::parse($data_nuova_assegnazione_str);
-                if ($nuova_section_id != $attuale_section_id_attiva) {
-                    if ($attuale_section_id_attiva) {
+                if ($nuova_section_id != $attuale_section_id_attiva) { 
+                    if ($attuale_section_id_attiva) { 
                         $data_fine_vecchia = $data_nuova_assegnazione->copy()->subDay();
-                        if ($data_inizio_attuale_assegnazione && $data_inizio_attuale_assegnazione->gt($data_fine_vecchia)) {
+                        if ($data_inizio_attuale_assegnazione && $data_inizio_attuale_assegnazione->gt($data_fine_vecchia)) { 
                             $data_fine_vecchia = $data_inizio_attuale_assegnazione;
                         }
                         $profile->sectionHistory()->updateExistingPivot($attuale_section_id_attiva, [
                             'data_fine_assegnazione' => $data_fine_vecchia
                         ]);
                     }
+                    
                     $profile->sectionHistory()->attach($nuova_section_id, [
                         'data_inizio_assegnazione' => $data_nuova_assegnazione,
-                        'data_fine_assegnazione' => null,
+                        'data_fine_assegnazione' => null, 
                         'note' => $note_nuova_assegnazione ?? __('Cambio sezione.'),
                     ]);
-                } elseif ($attuale_section_id_attiva && $attualeAssegnazioneAttiva) {
+                } elseif ($attuale_section_id_attiva && $attualeAssegnazioneAttiva) { 
                      $profile->sectionHistory()->updateExistingPivot($attuale_section_id_attiva, [
-                        'data_inizio_assegnazione' => $data_nuova_assegnazione,
-                        'note' => $note_nuova_assegnazione ?? $attualeAssegnazioneAttiva->pivot->note,
+                        'data_inizio_assegnazione' => $data_nuova_assegnazione, 
+                        'note' => $note_nuova_assegnazione ?? $attualeAssegnazioneAttiva->pivot->note, 
                     ]);
                 }
-            } elseif (is_null($nuova_section_id) && $attuale_section_id_attiva) {
-                $data_fine_attuale_str = $data_nuova_assegnazione_str ?: Carbon::today()->toDateString();
+            } elseif (is_null($nuova_section_id) && $attuale_section_id_attiva) { 
+                
+                $data_fine_attuale_str = $data_nuova_assegnazione_str ?: Carbon::today()->toDateString(); 
                 $data_fine_attuale = Carbon::parse($data_fine_attuale_str);
-                if ($data_inizio_attuale_assegnazione && $data_inizio_attuale_assegnazione->gt($data_fine_attuale)) {
+                if ($data_inizio_attuale_assegnazione && $data_inizio_attuale_assegnazione->gt($data_fine_attuale)) { 
                      $data_fine_attuale = $data_inizio_attuale_assegnazione;
                 }
                 $profile->sectionHistory()->updateExistingPivot($attuale_section_id_attiva, [
@@ -682,7 +656,6 @@ class AnagraficaController extends Controller
             return back()->withInput()->with('error', __('Errore durante l\'aggiornamento dell\'assegnazione della sezione:') . ' ' . $e->getMessage());
         }
     }
-
     public function createTransferOutForm(Profile $profile)
     {
         $this->authorize('terminate employment profile');
@@ -716,12 +689,14 @@ class AnagraficaController extends Controller
                 'ente_destinazione_trasferimento' => $request->ente_destinazione_trasferimento,
                 'note_periodo' => $currentPeriod->note_periodo . ($request->filled('note_uscita') ? "\n--- NOTE USCITA ---\n" . $request->note_uscita : ''),
             ]);
+            
             $currentSectionAssignment = $profile->getCurrentSectionAssignmentWithPivot();
             if ($currentSectionAssignment) {
                 $dataFineAssegnazione = Carbon::parse($request->data_fine_periodo);
-                if (Carbon::parse($currentSectionAssignment->pivot->data_inizio_assegnazione)->gt($dataFineAssegnazione)) {
-                    $dataFineAssegnazione = Carbon::parse($currentSectionAssignment->pivot->data_inizio_assegnazione);
-                }
+                 
+                 if (Carbon::parse($currentSectionAssignment->pivot->data_inizio_assegnazione)->gt($dataFineAssegnazione)) {
+                     $dataFineAssegnazione = Carbon::parse($currentSectionAssignment->pivot->data_inizio_assegnazione);
+                 }
                 $profile->sectionHistory()->updateExistingPivot($currentSectionAssignment->id, [
                     'data_fine_assegnazione' => $dataFineAssegnazione
                 ]);
@@ -734,14 +709,14 @@ class AnagraficaController extends Controller
             return back()->withInput()->with('error', __('Errore durante la terminazione del periodo di impiego:') . ' ' . $e->getMessage());
         }
     }
-
     public function editPpes(Profile $profile) {
-        $this->authorize('update profile', $profile);
+        $this->authorize('update profile', $profile); 
         $allPpes = PPE::orderBy('name')->get();
         $profile->load([
-            'assignedPpes',
-            'activities.risks.ppes'
+            'assignedPpes', 
+            'activities.risks.ppes' 
         ]);
+        
         $activityRiskRequiredPpeDetails = [];
         if ($profile->relationLoaded('activities')) {
             foreach ($profile->activities as $activity) {
@@ -760,6 +735,7 @@ class AnagraficaController extends Controller
             }
         }
 
+        
         $ppesData = $allPpes->map(function ($ppe) use ($profile, $activityRiskRequiredPpeDetails) {
             $manualAssignment = $profile->assignedPpes->firstWhere('id', $ppe->id);
             $isManuallyAssigned = (bool) $manualAssignment;
@@ -781,6 +757,7 @@ class AnagraficaController extends Controller
                 'current_manual_reason' => $currentManualReason,
                 'is_required_by_activity_risk' => $isRequiredByActivityRisk,
                 'requiring_sources_string' => $requiringSourcesString,
+                
                 'highlight_as_missing_requirement' => $isRequiredByActivityRisk && !$isManuallyAssigned,
             ];
         });
@@ -791,9 +768,9 @@ class AnagraficaController extends Controller
         $this->authorize('update profile', $profile);
         $validated = $request->validate([
             'assigned_ppes' => 'nullable|array',
-            'assigned_ppes.*' => 'required|exists:ppes,id',
+            'assigned_ppes.*' => 'required|exists:ppes,id', 
             'reasons' => 'nullable|array',
-            'reasons.*' => 'nullable|string|max:255',
+            'reasons.*' => 'nullable|string|max:255', 
         ]);
         try {
             DB::beginTransaction();
@@ -801,12 +778,13 @@ class AnagraficaController extends Controller
             if ($request->filled('assigned_ppes')) {
                 foreach ($request->input('assigned_ppes') as $ppeId) {
                     $syncData[$ppeId] = [
-                        'assignment_type' => 'manual',
-                        'reason' => $request->input("reasons.{$ppeId}") ??
- 'Assegnazione manuale del ' . Carbon::now()->format('d/m/Y'),
+                        'assignment_type' => 'manual', 
+                        'reason' => $request->input("reasons.{$ppeId}") ?? 
+ 'Assegnazione manuale del ' . Carbon::now()->format('d/m/Y'), 
                     ];
                 }
             }
+            
             $profile->assignedPpes()->sync($syncData);
             DB::commit();
             return redirect()->route('profiles.show', $profile->id)->with('success', 'Assegnazioni DPI manuali aggiornate con successo.');
@@ -816,17 +794,18 @@ class AnagraficaController extends Controller
             return back()->withInput()->with('error', 'Errore durante l\'aggiornamento delle assegnazioni DPI: ' . $e->getMessage());
         }
     }
-
     public function destroy(Profile $profile)
     {
         $this->authorize('delete profile', $profile);
         try {
             DB::beginTransaction();
 
+            
             $currentEmployment = $profile->getCurrentEmploymentPeriod();
             if ($currentEmployment) {
                 $currentEmployment->update(['data_fine_periodo' => Carbon::today()]);
             }
+            
             $currentSectionAssignment = $profile->getCurrentSectionAssignmentWithPivot();
             if ($currentSectionAssignment) {
                 $dataFineAssegnazione = Carbon::today();
@@ -836,12 +815,15 @@ class AnagraficaController extends Controller
                 $profile->sectionHistory()->updateExistingPivot($currentSectionAssignment->id, ['data_fine_assegnazione' => $dataFineAssegnazione]);
             }
 
+            
             $profile->activities()->detach();
             $profile->assignedPpes()->detach();
-            ProfileSafetyCourse::where('profile_id', $profile->id)->delete();
-            $profile->healthCheckRecords()->delete();
+            
+            ProfileSafetyCourse::where('profile_id', $profile->id)->delete(); 
+            $profile->healthCheckRecords()->delete(); 
 
-            $profile->delete();
+            
+            $profile->delete(); 
             DB::commit();
             return redirect()->route('profiles.index')->with('success', __('Profilo archiviato (soft deleted) con successo.'));
         } catch (\Exception $e) {
@@ -850,14 +832,12 @@ class AnagraficaController extends Controller
             return redirect()->route('profiles.index')->with('error', __('Errore durante l\'archiviazione del profilo:') . ' ' . $e->getMessage());
         }
     }
-
     public function archivedIndex()
     {
         $this->authorize('viewAny archived_profiles');
         $user = Auth::user();
-        // Definisce i permessi specifici per le azioni nella vista archivio
         $userPermissions = [
-            'can_view_archived_profile' => $user->can('view profile'), // Permesso di base per vedere un profilo
+            'can_view_archived_profile' => $user->can('view profile'), 
             'can_restore_archived_profile' => $user->can('restore profile'),
             'can_force_delete_archived_profile' => $user->can('forceDelete profile'),
             'can_create_new_employment_for_inactive' => $user->can('create new_employment profile'),
@@ -869,18 +849,19 @@ class AnagraficaController extends Controller
     {
         $this->authorize('viewAny archived_profiles');
         try {
+            
             $baseQuery = Profile::query()
-                ->withTrashed()
+                ->withTrashed() 
                 ->where(function ($query) {
-                    $query->whereNotNull('deleted_at')
-                            ->orWhere(function ($queryNonDeletati) {
+                    $query->whereNotNull('deleted_at') 
+                            ->orWhere(function ($queryNonDeletati) { 
                                 $queryNonDeletati->whereNull('deleted_at')
-                                                 ->where(function ($qInactive) {
-                                                     $qInactive->whereDoesntHave('employmentPeriods')
-                                                               ->orWhere(function ($qAllPeriodsEnded) {
+                                                 ->where(function ($qInactive) { 
+                                                     $qInactive->whereDoesntHave('employmentPeriods') 
+                                                               ->orWhere(function ($qAllPeriodsEnded) { 
                                                                    $qAllPeriodsEnded->whereHas('employmentPeriods')
                                                                                     ->whereDoesntHave('employmentPeriods', function ($epQuery) {
-                                                                                        $epQuery->whereNull('data_fine_periodo');
+                                                                                        $epQuery->whereNull('data_fine_periodo'); 
                                                                                     });
                                                                });
                                                  });
@@ -894,10 +875,12 @@ class AnagraficaController extends Controller
 
             $query = $baseQuery->clone()
                 ->select(array_merge($qualifiedProfileColumns, [
+                    
                     DB::raw('(SELECT tipo_uscita FROM employment_periods ep WHERE ep.profile_id = profiles.id AND ep.deleted_at IS NULL ORDER BY ep.data_inizio_periodo DESC LIMIT 1) as last_tipo_uscita'),
                     DB::raw('(SELECT data_fine_periodo FROM employment_periods ep WHERE ep.profile_id = profiles.id AND ep.deleted_at IS NULL ORDER BY ep.data_inizio_periodo DESC LIMIT 1) as last_data_fine_periodo'),
                     DB::raw('(SELECT ente_destinazione_trasferimento FROM employment_periods ep WHERE ep.profile_id = profiles.id AND ep.deleted_at IS NULL ORDER BY ep.data_inizio_periodo DESC LIMIT 1) as last_ente_destinazione'),
             ]));
+            
             if ($request->filled('search.value')) {
                 $searchValue = $request->input('search.value');
                 $query->where(function ($q) use ($searchValue) {
@@ -908,6 +891,7 @@ class AnagraficaController extends Controller
             }
 
             $totalFiltered = $query->clone()->count();
+            
             if ($request->has('order') && is_array($request->input('order')) && count($request->input('order')) > 0) {
                 $orderColumnIndex = $request->input('order.0.column');
                 $orderDirection = $request->input('order.0.dir');
@@ -915,32 +899,37 @@ class AnagraficaController extends Controller
 
                 if (isset($columns[$orderColumnIndex]['data'])) {
                     $columnToSort = $columns[$orderColumnIndex]['data'];
+                    
                     $sortMapping = [
                         'grado' => 'profiles.grado',
                         'nome' => 'profiles.nome',
                         'cognome' => 'profiles.cognome',
-                        'stato_attuale_display' => 'profiles.deleted_at',
+                        
+                        'stato_attuale_display' => 'profiles.deleted_at', 
                     ];
                     if (array_key_exists($columnToSort, $sortMapping)) {
                         $query->orderBy($sortMapping[$columnToSort], $orderDirection);
                     } else {
-                        $query->orderBy('profiles.cognome', 'asc')->orderBy('profiles.nome', 'asc');
+                        $query->orderBy('profiles.cognome', 'asc')->orderBy('profiles.nome', 'asc'); 
                     }
                 } else {
-                    $query->orderBy('profiles.cognome', 'asc')->orderBy('profiles.nome', 'asc');
+                    $query->orderBy('profiles.cognome', 'asc')->orderBy('profiles.nome', 'asc'); 
                 }
             } else {
+                
                 $query->orderBy('profiles.deleted_at', 'desc')->orderBy('profiles.cognome', 'asc');
             }
 
 
+            
             if ($request->has('length') && $request->input('length') != -1) {
                 $query->skip($request->input('start'))->take($request->input('length'));
             }
 
             $profiles = $query->get();
+            
             $data = $profiles->map(function ($profile) {
-                $stato = $profile->getDisplayStatusAttribute();
+                $stato = $profile->getDisplayStatusAttribute(); 
                 return [
                     'id' => $profile->id,
                     'grado' => $profile->grado ?? __('N/D'),
@@ -948,7 +937,8 @@ class AnagraficaController extends Controller
                     'cognome' => $profile->cognome,
                     'cf' => $profile->cf ?? __('N/D'),
                     'stato_attuale_display' => $stato,
-                    'is_soft_deleted' => $profile->trashed(),
+                    'is_soft_deleted' => $profile->trashed(), 
+                    
                     'is_employment_ended' => !$profile->trashed() && $profile->getLatestEmploymentPeriod() && $profile->getLatestEmploymentPeriod()->data_fine_periodo,
                 ];
             });
@@ -966,7 +956,6 @@ class AnagraficaController extends Controller
             ], 500);
         }
     }
-
     public function restore($id)
     {
         $profile = Profile::withTrashed()->findOrFail($id);
@@ -977,9 +966,10 @@ class AnagraficaController extends Controller
 
         try {
             DB::beginTransaction();
-            $profile->restore();
+            $profile->restore(); 
+            
             DB::commit();
-            return redirect()->route('profiles.show', $profile->id)
+            return redirect()->route('profiles.show', $profile->id) 
                              ->with('success', __('Profilo ripristinato con successo. È ora possibile registrare un nuovo periodo di impiego.'));
         } catch (\Exception $e) {
             DB::rollBack();
@@ -993,17 +983,24 @@ class AnagraficaController extends Controller
         $profile = Profile::withTrashed()->findOrFail($id);
         $this->authorize('forceDelete profile', $profile);
         if (!$profile->trashed()) {
+            
             return redirect()->route('admin.profiles.archived_index')->with('error', __('Il profilo deve essere prima archiviato (soft deleted) per poter essere eliminato definitivamente.'));
         }
 
         try {
             DB::beginTransaction();
+            
+            
             $profile->sectionHistory()->detach();
             $profile->activities()->detach();
             $profile->assignedPpes()->detach();
-            ProfileSafetyCourse::where('profile_id', $profile->id)->forceDelete();
-            $profile->healthCheckRecords()->forceDelete();
-            $profile->employmentPeriods()->forceDelete();
+            
+            
+            ProfileSafetyCourse::where('profile_id', $profile->id)->forceDelete(); 
+            $profile->healthCheckRecords()->forceDelete(); 
+            $profile->employmentPeriods()->forceDelete(); 
+            
+            
             $profile->forceDelete();
             DB::commit();
             return redirect()->route('admin.profiles.archived_index')->with('success', __('Profilo eliminato definitivamente con successo.'));
@@ -1013,26 +1010,18 @@ class AnagraficaController extends Controller
             return redirect()->route('admin.profiles.archived_index')->with('error', __('Errore durante l\'eliminazione definitiva del profilo:') . ' ' . $e->getMessage());
         }
     }
-
-    /**
-     * Mostra il form per modificare le attività assegnate a un profilo.
-     */
     public function editActivities(Profile $profile)
     {
-        $this->authorize('update profile', $profile); // Utilizza il permesso generico di update
+        $this->authorize('update profile', $profile);
 
         $allActivities = Activity::orderBy('name')->get();
         $assignedActivityIds = $profile->activities()->pluck('activities.id')->toArray();
 
         return view('profiles.edit_activities', compact('profile', 'allActivities', 'assignedActivityIds'));
     }
-
-    /**
-     * Aggiorna le attività assegnate a un profilo.
-     */
     public function updateActivities(Request $request, Profile $profile)
     {
-        $this->authorize('update profile', $profile); // Utilizza il permesso generico di update
+        $this->authorize('update profile', $profile);
 
         $validated = $request->validate([
             'activity_ids' => 'nullable|array',
@@ -1050,36 +1039,170 @@ class AnagraficaController extends Controller
             return back()->with('error', 'Errore durante l\'aggiornamento delle attività: ' . $e->getMessage());
         }
     }
-    
-    
-     /**
-     * Esporta la scheda anagrafica in formato PDF.
-     *
-     * @param  \App\Models\Profile  $profile
-     * @return \Illuminate\Http\Response
+
+    /**
+     * Mostra l'elenco dei profili con corsi che presentano criticità (mancanti, scaduti, in scadenza).
      */
+    public function indexWithCourseIssues(Request $request)
+    {
+        $this->authorize('viewAny profile');
+        $now = Carbon::now();
+        $sixtyDaysFromNow = $now->copy()->addDays(60);
+        $profilesWithIssuesDetails = new Collection();
+
+        // Pre-carica i modelli dei corsi per evitare query N+1 nel ciclo
+        $allSafetyCourses = SafetyCourse::all()->keyBy('id');
+
+        $activeProfiles = Profile::whereHas('employmentPeriods', fn ($q) => $q->whereNull('data_fine_periodo'))
+            ->with([
+                'activities.safetyCourses', // Ottiene i corsi richiesti dalle attività
+                'safetyCourses.pivot'       // Ottiene le frequenze dei corsi del profilo
+            ])
+            ->get();
+
+        foreach ($activeProfiles as $profile) {
+            $requiredCourseIds = $profile->activities->flatMap->safetyCourses->pluck('id')->unique()->all();
+            if (empty($requiredCourseIds)) continue;
+
+            foreach ($requiredCourseIds as $reqCourseId) {
+                $courseModel = $allSafetyCourses->get($reqCourseId);
+                if (!$courseModel) continue;
+
+                $latestAttendance = $profile->safetyCourses->where('id', $reqCourseId)->sortByDesc('pivot.attended_date')->first();
+                $reason = '';
+                $isCritical = false;
+
+                if (!$latestAttendance || !$latestAttendance->pivot->attended_date) {
+                    $reason = "Corso '{$courseModel->name}' mancante.";
+                    $isCritical = true;
+                } else {
+                    if ($courseModel->duration_years && $courseModel->duration_years > 0) {
+                        $expirationDate = Carbon::parse($latestAttendance->pivot->attended_date)->addYears($courseModel->duration_years);
+                        if ($expirationDate->isPast()) {
+                            $reason = "Corso '{$courseModel->name}' scaduto il " . $expirationDate->format('d/m/Y') . ".";
+                            $isCritical = true;
+                        } elseif ($expirationDate->isBetween($now, $sixtyDaysFromNow)) {
+                            $reason = "Corso '{$courseModel->name}' in scadenza il " . $expirationDate->format('d/m/Y') . ".";
+                            $isCritical = true;
+                        }
+                    }
+                }
+
+                if ($isCritical) {
+                    $profilesWithIssuesDetails->push([
+                        'profile' => $profile,
+                        'reason' => $reason,
+                    ]);
+                    break; 
+                }
+            }
+        }
+        
+        $profiles = $profilesWithIssuesDetails->map(fn ($item) => $item['profile'])->unique('id')->sortBy('cognome');
+        $attentionDetails = $profilesWithIssuesDetails->keyBy('profile.id')->map(fn ($item) => $item['reason']);
+
+        return view('profiles.related_list', [
+            'profiles' => $profiles,
+            'attentionDetails' => $attentionDetails,
+            'parentItemType' => __('Corsi'),
+            'parentItemName' => __('Profili con Criticità Corsi'),
+            'backUrl' => route('dashboard')
+        ]);
+    }
+
+    /**
+     * Mostra l'elenco dei profili con visite mediche che presentano criticità (mancanti, scadute, in scadenza).
+     */
+    public function indexWithHealthRecordIssues(Request $request)
+    {
+        $this->authorize('viewAny profile');
+        $now = Carbon::now();
+        $sixtyDaysFromNow = $now->copy()->addDays(60);
+        $profilesWithIssuesDetails = new Collection();
+        
+        // Pre-carica i modelli delle sorveglianze per evitare query N+1
+        $allHealthSurveillances = HealthSurveillance::all()->keyBy('id');
+
+        $activeProfiles = Profile::whereHas('employmentPeriods', fn ($q) => $q->whereNull('data_fine_periodo'))
+            ->with([
+                'activities.healthSurveillances', 
+                'healthCheckRecords.healthSurveillance' // Carica anche la relazione dal record alla sorveglianza
+            ])
+            ->get();
+
+        foreach ($activeProfiles as $profile) {
+            $requiredHealthSurveillanceIds = $profile->activities->flatMap->healthSurveillances->pluck('id')->unique()->all();
+            if (empty($requiredHealthSurveillanceIds)) continue;
+
+            foreach ($requiredHealthSurveillanceIds as $reqHsId) {
+                $healthSurveillanceModel = $allHealthSurveillances->get($reqHsId);
+                if (!$healthSurveillanceModel) continue;
+
+                $latestCheckUp = $profile->healthCheckRecords->where('health_surveillance_id', $reqHsId)->sortByDesc('check_up_date')->first();
+                $reason = '';
+                $isCritical = false;
+
+                if (!$latestCheckUp) {
+                    $reason = "Visita '{$healthSurveillanceModel->name}' mancante.";
+                    $isCritical = true;
+                } else {
+                    if ($latestCheckUp->expiration_date) { 
+                        $expirationDate = Carbon::parse($latestCheckUp->expiration_date);
+                        if ($expirationDate->isPast()) {
+                            $reason = "Visita '{$healthSurveillanceModel->name}' scaduta il " . $expirationDate->format('d/m/Y') . ".";
+                            $isCritical = true;
+                        } elseif ($expirationDate->isBetween($now, $sixtyDaysFromNow)) {
+                            $reason = "Visita '{$healthSurveillanceModel->name}' in scadenza il " . $expirationDate->format('d/m/Y') . ".";
+                            $isCritical = true;
+                        }
+                    } 
+                    // else if ($healthSurveillanceModel->duration_years && $healthSurveillanceModel->duration_years > 0) {
+                    //     // Caso in cui expiration_date non è nel record ma la sorveglianza ha una durata teorica
+                    //     // Potrebbe indicare un dato incompleto o una visita molto vecchia senza scadenza registrata.
+                    //     // Considerala "mancante di informazioni sulla scadenza" o calcola una scadenza teorica.
+                    //     // Per ora, ci si basa su expiration_date presente.
+                    // }
+                }
+                
+                if ($isCritical) {
+                    $profilesWithIssuesDetails->push([
+                        'profile' => $profile,
+                        'reason' => $reason,
+                    ]);
+                    break; 
+                }
+            }
+        }
+
+        $profiles = $profilesWithIssuesDetails->map(fn ($item) => $item['profile'])->unique('id')->sortBy('cognome');
+        $attentionDetails = $profilesWithIssuesDetails->keyBy('profile.id')->map(fn ($item) => $item['reason']);
+        
+        return view('profiles.related_list', [
+            'profiles' => $profiles,
+            'attentionDetails' => $attentionDetails,
+            'parentItemType' => __('Sorveglianza Sanitaria'),
+            'parentItemName' => __('Profili con Criticità Visite'),
+            'backUrl' => route('dashboard')
+        ]);
+    }
+    
     public function exportPdf(Profile $profile)
     {
-        // Autorizzazione: verifica se l'utente può visualizzare questo profilo
         $this->authorize('view profile', $profile);
 
-        // Carica tutte le relazioni necessarie per evitare N+1 query nella vista PDF
         $profile->load([
-            'employmentPeriods', // Per incarico, mansione, data arrivo
-            'sectionHistory.office', // Per sezione e ufficio attuali
-            'activities.risks.ppes', // Per attività, rischi e DPI da rischi
-            'activities.healthSurveillances', // Per sorveglianze sanitarie da attività
-            'activities.safetyCourses', // Per corsi da attività (se vuoi listarli)
-            'assignedPpes', // Per DPI assegnati manualmente
-            // 'healthCheckRecords.healthSurveillance', // Già caricato in show, ma ricarica per sicurezza
-            // 'safetyCourses.pivot', // Già caricato in show
+            'employmentPeriods', 
+            'sectionHistory.office', 
+            'activities.risks.ppes', 
+            'activities.healthSurveillances', 
+            'activities.safetyCourses', 
+            'assignedPpes', 
         ]);
 
         $currentEmploymentPeriod = $profile->getCurrentEmploymentPeriod();
         $currentSectionAssignment = $profile->getCurrentSectionAssignmentWithPivot();
-        $currentSection = $currentSectionAssignment ? $currentSectionAssignment : null; // Se sectionHistory() restituisce la sezione direttamente
+        $currentSection = $currentSectionAssignment; 
         
-        // Raccogli i rischi connessi dalle attività
         $connectedRisks = collect();
         if ($profile->relationLoaded('activities')) {
             foreach ($profile->activities as $activity) {
@@ -1092,9 +1215,7 @@ class AnagraficaController extends Controller
         }
         $connectedRisks = $connectedRisks->sortBy('name');
 
-        // Raccogli i DPI (sia da rischi che manuali)
         $allPpesForProfile = collect();
-        // DPI da rischi
         if ($profile->relationLoaded('activities')) {
             foreach ($profile->activities as $activity) {
                 if ($activity->relationLoaded('risks')) {
@@ -1108,7 +1229,6 @@ class AnagraficaController extends Controller
                 }
             }
         }
-        // DPI manuali
         if ($profile->relationLoaded('assignedPpes')) {
             foreach ($profile->assignedPpes as $manualPpe) {
                 $allPpesForProfile->put($manualPpe->id, $manualPpe);
@@ -1116,8 +1236,6 @@ class AnagraficaController extends Controller
         }
         $allPpesForProfile = $allPpesForProfile->sortBy('name');
 
-
-        // Raccogli tipi di visite (sorveglianze sanitarie) e cadenza
         $requiredHealthSurveillances = collect();
         if ($profile->relationLoaded('activities')) {
             foreach($profile->activities as $activity) {
@@ -1130,31 +1248,20 @@ class AnagraficaController extends Controller
         }
         $requiredHealthSurveillances = $requiredHealthSurveillances->sortBy('name');
 
-
         $data = [
             'profile' => $profile,
             'currentEmploymentPeriod' => $currentEmploymentPeriod,
-            'currentSection' => $currentSection,
+            'currentSection' => $currentSection, 
             'connectedRisks' => $connectedRisks,
             'allPpesForProfile' => $allPpesForProfile,
             'requiredHealthSurveillances' => $requiredHealthSurveillances,
             'generationDate' => Carbon::now()->format('d/m/Y'),
-            'generationPlace' => 'Taranto', // Come richiesto
+            'generationPlace' => 'Taranto',
         ];
-
-        // Imposta la lingua per il PDF, se hai traduzioni
-        // App::setLocale('it'); // O la lingua dell'utente
-
-        // Genera il PDF
-        // Il nome del file sarà qualcosa tipo "scheda_anagrafica_rossi_mario.pdf"
+        
         $pdfFileName = 'scheda_anagrafica_' . Str::slug($profile->cognome . '_' . $profile->nome, '_') . '.pdf';
         
-        // ->setPaper('a4', 'portrait') // Opzionale: imposta formato e orientamento
-        $pdf = Pdf::loadView('profiles.pdf_export', $data); 
-                                
-
+        $pdf = Pdf::loadView('profiles.pdf_export', $data);
         return $pdf->download($pdfFileName);
-        // Per visualizzare nel browser invece di scaricare:
-        // return $pdf->stream($pdfFileName);
     }
 }

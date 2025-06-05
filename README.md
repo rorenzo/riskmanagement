@@ -5,6 +5,13 @@ apt install npm composer vite
 a2enmod rewrite (con più siti su stesso server)
 
 
+composer require laravel/breeze --dev
+composer require spatie/laravel-permission
+composer require laravel/sanctum
+composer require barryvdh/laravel-dompdf
+composer dump-autoload
+
+
 sudo chown -R prog:www-data /var/www/riskmanagement
 
 sudo find /var/www/riskmanagement -type d -exec chmod 750 {} \;
