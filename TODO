@@ -4,13 +4,11 @@ autocompletamento gradi
 validator dati
 
 dashboard
-anagrafiche disattivate
 
 numerazione anagrafiche
 
-ogni attività ha i suoi DPI, quando assegno un attività ad una anagrafica assegno i dpi, se successivamente assegno altri 
-dpi all'attività cosa deve succedere all'anagrafica?
+ottimizzare AnagraficaController
 
+ottimizzare la view dello show delle anagrafiche
 
-manca da modificare la vista per associare le sorveglianze sanitarie
 
