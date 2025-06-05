@@ -23,7 +23,8 @@ return new class extends Migration
 
             $table->string('tipo_ingresso')->comment('Es: Assunzione, Rientro da trasferimento, Reintegro');
             $table->string('tipo_uscita')->nullable()->comment('Es: Dimissioni, Licenziamento, Pensionamento, Trasferimento in uscita');
-
+            $table->string('incarico')->nullable()->comment('Es: direttore, capo ufficio, capo sezione, addetto');
+            $table->text('mansione')->nullable();
             $table->string('ente_provenienza_trasferimento')->nullable()->comment('Nome ente da cui proviene per trasferimento');
             $table->string('ente_destinazione_trasferimento')->nullable()->comment('Nome ente verso cui va per trasferimento');
 

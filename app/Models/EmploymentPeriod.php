@@ -36,6 +36,8 @@ class EmploymentPeriod extends Model
         'ente_provenienza_trasferimento',
         'ente_destinazione_trasferimento',
         'note_periodo',
+        'incarico',
+        'mansione',
     ];
     protected $casts = [ //
         'data_inizio_periodo' => 'date',
@@ -68,5 +70,21 @@ class EmploymentPeriod extends Model
             self::TIPO_USCITA_DECESSO => __('Decesso'),
             self::TIPO_USCITA_ALTRO => __('Altra Cessazione'),
         ];
+    }
+    
+    /**
+     * Accessor per visualizzare il nome leggibile dell'incarico.
+     */
+    public function getIncaricoDisplayNameAttribute(): ?string
+    {
+        return Profile::INCARICHI_DISPONIBILI[$this->incarico] ?? $this->incarico;
+    }
+
+    /**
+     * Accessor per visualizzare il nome leggibile della mansione S.P.P.
+     */
+    public function getMansioneSppDisplayNameAttribute(): ?string
+    {
+        return Profile::MANSIONI_SPP_DISPONIBILI[$this->mansione] ?? $this->mansione;
     }
 }

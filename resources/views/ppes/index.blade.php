@@ -39,21 +39,33 @@
                                     <th>{{ __('Nome DPI') }}</th>
                                     <th>{{ __('Descrizione') }}</th>
                                     <th class="text-center">{{ __('N. Rischi Associati') }}</th>
-                                    <th class="text-center no-sort">{{ __('Profili') }}</th>
+                                    <th class="text-center no-sort">{{ __('Profili Assegnati') }}</th>
+                                    <th class="text-center no-sort">{{ __('Attenzione') }}</th>
                                     <th class="text-center actions-column">{{ __('Azioni') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($ppes as $ppe)
-                                    <tr>
+                                    <tr class="{{ $ppe->profiles_needing_attention_count > 0 ? 'table-warning' : '' }}">
                                         <td>{{ $ppe->name }}</td>
                                         <td>{{ Str::limit($ppe->description, 70) }}</td>
-<td class="text-center">{{ $ppe->risks_count ?? $ppe->risks->count() }}</td> {{-- MODIFICATO --}}
+                                        <td class="text-center">{{ $ppe->risks_count ?? $ppe->risks->count() }}</td>
                                         <td class="text-center">
-    <a href="{{ route('ppes.showProfiles', $ppe->id) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('Vedi Profili con Assegnazione Diretta di questo DPI') }}">
-        <i class="fas fa-user-check"></i>
-    </a>
-</td>
+                                            <a href="{{ route('ppes.showProfiles', $ppe->id) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('Vedi Profili con Assegnazione Diretta di questo DPI') }}">
+                                                <i class="fas fa-user-check"></i>
+                                                ({{ $ppe->profiles_count ?? $ppe->profiles->count() }})
+                                            </a>
+                                        </td>
+                                        <td class="text-center">
+                                            @if($ppe->profiles_needing_attention_count > 0)
+                                                <a href="{{ route('ppes.showProfilesWithAttention', $ppe->id) }}" class="btn btn-sm btn-warning" title="{{ __('Vedi Profili che necessitano attenzione per questo DPI') }}">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                    ({{ $ppe->profiles_needing_attention_count }})
+                                                </a>
+                                            @else
+                                                <span class="text-success" title="{{__('Nessuna attenzione richiesta')}}"><i class="fas fa-check-circle"></i></span>
+                                            @endif
+                                        </td>
                                         <td class="text-center">
                                             <a href="{{ route('ppes.show', $ppe->id) }}" class="btn btn-sm btn-info" title="{{ __('Visualizza') }}">
                                                 <i class="fas fa-eye"></i>
@@ -84,21 +96,27 @@
     </div>
 
     @push('styles')
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
         <style>
             #ppesTable td, #ppesTable th {
                 vertical-align: middle;
             }
-            
             .actions-column {
-                width: 140px; /* Imposta una larghezza fissa per la colonna */
-                white-space: nowrap; /* Impedisce ai bottoni di andare a capo */
+                width: 180px; /* Aumentata la larghezza per più spazio */
+                min-width: 180px; /* Aggiunto min-width per sicurezza */
+                white-space: nowrap;
+            }
+            .table-warning {
+                --bs-table-bg: #fff3cd;
+                --bs-table-border-color: #ffe69c;
+            }
+            .table-warning a.btn-warning {
+                color: #000 !important;
             }
         </style>
     @endpush
 
     @push('scripts')
-        {{-- Assumendo che jQuery e DataTables JS siano globali o in app.js --}}
         <script type="module">
             if (window.$ && typeof window.$.fn.DataTable === 'function') {
                 window.$(document).ready(function() {
@@ -106,10 +124,11 @@
                         language: {
                             url: "{{ asset('js/it-IT.json') }}",
                         },
-                        order: [[1, 'asc']], // Ordina per nome DPI
+                        order: [[0, 'asc']], // Ordina per nome DPI
                         columnDefs: [
-                            { targets: [2], className: 'text-center' }, // N. Attività
-                            { targets: [3, 4], orderable: false, searchable: false, className: 'text-center' } // Azioni
+                            // Nome(0), Desc(1), N.Rischi(2), ProfiliAss.(3), Attenzione(4), Azioni(5)
+                            { targets: [2, 3, 4], className: 'text-center' },
+                            { targets: [3, 4, 5], orderable: false, searchable: false } // Colonne non ordinabili/cercabili
                         ]
                     });
                 });

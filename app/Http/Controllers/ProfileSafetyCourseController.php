@@ -1,36 +1,36 @@
 <?php
 
 namespace App\Http\Controllers;
- 
+
 use App\Models\Profile;
 use App\Models\SafetyCourse;
 use App\Models\ProfileSafetyCourse; // Il nostro modello pivot
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\{Log}; 
+use Illuminate\Support\Facades\{
+    Log
+};
 use Illuminate\Support\Str;
 
-class ProfileSafetyCourseController extends Controller
-{
-    
-     public function __construct()
-{
-    $resourceName = 'profileSafetyCourse'; // Chiave usata in PermissionSeeder
-        $resourceName = str_replace('_', ' ', Str::snake($resourceName)); // es. "health surveillance"
+class ProfileSafetyCourseController extends Controller {
 
-//        $this->middleware('permission:viewAny ' . $resourceName . '|view ' . $resourceName, ['only' => ['index', 'show', 'showProfiles']]);
-        $this->middleware('permission:create ' . $resourceName, ['only' => ['create', 'store']]);
-        $this->middleware('permission:update ' . $resourceName, ['only' => ['edit', 'update']]);
-        $this->middleware('permission:delete ' . $resourceName, ['only' => ['destroy']]);
-}
+    public function __construct() {
+        $resourceName = 'profileSafetyCourse'; // Chiave usata in PermissionSeeder
+        // CORREZIONE: Assicura che permissionBaseName sia usato coerentemente con il Seeder
+        $permissionBaseName = str_replace('_', ' ', Str::snake($resourceName)); // es. "profile safety course"
+        // $this->middleware('permission:viewAny ' . $permissionBaseName . '|view ' . $permissionBaseName, ['only' => ['index', 'show']]); // Se applicabile
+        $this->middleware('permission:create ' . $permissionBaseName, ['only' => ['create', 'store']]);
+        $this->middleware('permission:update ' . $permissionBaseName, ['only' => ['edit', 'update']]);
+        $this->middleware('permission:delete ' . $permissionBaseName, ['only' => ['destroy']]);
+    }
+
     /**
      * Show the form for creating a new safety course attendance record for a specific profile.
      */
-    public function create(Request $request, Profile $profile)
-    {
+    public function create(Request $request, Profile $profile) {
         $allSafetyCourses = SafetyCourse::orderBy('name')->get();
-        
+
         // Logica per arricchire l'elenco dei corsi con lo stato di frequenza/richiesta
         // Simile a quella usata in AnagraficaController@show per $requiredCoursesDisplayData
         $profile->load(['activities.safetyCourses', 'safetyCourses']); // Carica attività->corsi e corsi frequentati
@@ -55,10 +55,10 @@ class ProfileSafetyCourseController extends Controller
             $latestAttendance = null;
 
             if ($profile->relationLoaded('safetyCourses')) {
-                 $latestAttendance = $profile->safetyCourses->where('id', $course->id)->sortByDesc('pivot.attended_date')->first();
+                $latestAttendance = $profile->safetyCourses->where('id', $course->id)->sortByDesc('pivot.attended_date')->first();
             }
 
-            $isAttended = (bool)$latestAttendance && isset($latestAttendance->pivot->attended_date);
+            $isAttended = (bool) $latestAttendance && isset($latestAttendance->pivot->attended_date);
             $isExpired = false;
             $expirationDateFormatted = null;
 
@@ -70,7 +70,7 @@ class ProfileSafetyCourseController extends Controller
                     $isExpired = $expirationDateCarbon->isPast();
                 }
             }
-            
+
             if ($isActuallyRequired) {
                 if (!$isAttended) {
                     $statusText = __('Mancante');
@@ -86,7 +86,7 @@ class ProfileSafetyCourseController extends Controller
                     $statusClass = 'text-success';
                 }
             } elseif ($isAttended) { // Frequentato ma non richiesto dalle attività attuali
-                 if ($isExpired) {
+                if ($isExpired) {
                     $statusText = __('(Altro) Scaduto il: ') . $expirationDateFormatted;
                     $statusClass = 'text-muted';
                 } else {
@@ -96,14 +96,14 @@ class ProfileSafetyCourseController extends Controller
             }
 
 
-            return (object)[
-                'id' => $course->id,
-                'name' => $course->name,
-                'is_required' => $isActuallyRequired,
-                'is_attended' => $isAttended,
-                'is_expired' => $isExpired,
-                'status_text' => $statusText,
-                'status_class' => $statusClass,
+            return (object) [
+                        'id' => $course->id,
+                        'name' => $course->name,
+                        'is_required' => $isActuallyRequired,
+                        'is_attended' => $isAttended,
+                        'is_expired' => $isExpired,
+                        'status_text' => $statusText,
+                        'status_class' => $statusClass,
             ];
         });
 
@@ -116,8 +116,7 @@ class ProfileSafetyCourseController extends Controller
      * Store a newly created safety course attendance record in storage.
      * Soft-deletes previous attendances for the same course and profile.
      */
-    public function store(Request $request, Profile $profile)
-    {
+    public function store(Request $request, Profile $profile) {
         $validatedData = $request->validate([
             'safety_course_id' => 'required|exists:safety_courses,id',
             'attended_date' => 'required|date_format:Y-m-d',
@@ -136,14 +135,14 @@ class ProfileSafetyCourseController extends Controller
 
             // Soft delete delle frequenze precedenti per lo stesso corso e profilo
             ProfileSafetyCourse::where('profile_id', $profile->id)
-                ->where('safety_course_id', $validatedData['safety_course_id'])
-                ->delete(); // Esegue il soft delete
+                    ->where('safety_course_id', $validatedData['safety_course_id'])
+                    ->delete(); // Esegue il soft delete
 
             $expirationDate = null;
             if ($course->duration_years && $course->duration_years > 0) {
                 $expirationDate = Carbon::parse($validatedData['attended_date'])
-                                        ->addYears($course->duration_years)
-                                        ->toDateString();
+                        ->addYears($course->duration_years)
+                        ->toDateString();
             }
 
             // Usa attach per creare il nuovo record nella tabella pivot
@@ -153,7 +152,7 @@ class ProfileSafetyCourseController extends Controller
                 'expiration_date' => $expirationDate,
                 'certificate_number' => $validatedData['certificate_number'],
                 'notes' => $validatedData['notes'],
-                // created_at e updated_at sono gestiti da withTimestamps() sulla relazione
+                    // created_at e updated_at sono gestiti da withTimestamps() sulla relazione
             ]);
 
             DB::commit();
@@ -169,29 +168,25 @@ class ProfileSafetyCourseController extends Controller
      * Show the form for editing the specified safety course attendance record.
      * $attendance è un'istanza del modello pivot ProfileSafetyCourse.
      */
-    public function edit(ProfileSafetyCourse $attendance) // Route model binding sul modello Pivot
-    {
+    public function edit(ProfileSafetyCourse $attendance) { // Route model binding sul modello Pivot
         $profile = $attendance->profile; // Assumendo che tu abbia definito la relazione nel modello pivot
         $allSafetyCourses = SafetyCourse::orderBy('name')->get(); // Per il dropdown
-
         // Potresti voler passare anche $coursesDataForForm come nel create per coerenza
         // ma per l'edit di un record specifico, è meno cruciale l'evidenziazione di tutti gli stati.
         // Per semplicità, passiamo solo l'elenco completo dei corsi.
-        $coursesForDropdown = $allSafetyCourses->map(fn($c) => (object)['id' => $c->id, 'name' => $c->name]);
+        $coursesForDropdown = $allSafetyCourses->map(fn($c) => (object) ['id' => $c->id, 'name' => $c->name]);
 
-
-        if(!$profile) {
+        if (!$profile) {
             abort(404, 'Profilo non associato a questa frequenza.');
         }
-        
+
         return view('profile_safety_courses.edit', compact('attendance', 'profile', 'coursesForDropdown'));
     }
 
     /**
      * Update the specified safety course attendance record in storage.
      */
-    public function update(Request $request, ProfileSafetyCourse $attendance)
-    {
+    public function update(Request $request, ProfileSafetyCourse $attendance) {
         $validatedData = $request->validate([
             'safety_course_id' => 'required|exists:safety_courses,id', // L'utente potrebbe cambiare il tipo di corso
             'attended_date' => 'required|date_format:Y-m-d',
@@ -207,7 +202,7 @@ class ProfileSafetyCourseController extends Controller
                 DB::rollBack();
                 return back()->withInput()->with('error', 'Corso di sicurezza non valido.');
             }
-            
+
             // Se il tipo di corso è cambiato, potrebbe essere necessario gestire la logica di soft-delete
             // delle vecchie frequenze del *nuovo* tipo di corso, se si vuole mantenere un solo record attivo per tipo.
             // Per ora, aggiorniamo semplicemente questo record.
@@ -221,8 +216,8 @@ class ProfileSafetyCourseController extends Controller
             $expirationDate = null;
             if ($course->duration_years && $course->duration_years > 0) {
                 $expirationDate = Carbon::parse($validatedData['attended_date'])
-                                        ->addYears($course->duration_years)
-                                        ->toDateString();
+                        ->addYears($course->duration_years)
+                        ->toDateString();
             }
 
             $attendance->update([
@@ -245,8 +240,7 @@ class ProfileSafetyCourseController extends Controller
     /**
      * Remove the specified safety course attendance record from storage (soft delete).
      */
-    public function destroy(ProfileSafetyCourse $attendance)
-    {
+    public function destroy(ProfileSafetyCourse $attendance) {
         try {
             $profileId = $attendance->profile_id;
             $attendance->delete(); // Esegue il soft delete

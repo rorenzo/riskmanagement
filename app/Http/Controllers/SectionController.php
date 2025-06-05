@@ -71,7 +71,6 @@ public function create()
         // Carica i profili correntemente assegnati alla sezione
         // La relazione currentProfiles già filtra per data_fine_assegnazione null e impiego attivo
         $profiles = $section->currentProfiles()->orderBy('cognome')->orderBy('nome')->get();
-        
         $parentItemType = __('Sezione');
         $parentItemName = $section->nome;
         $backUrl = route('sections.index'); // O route('sections.show', $section->id) se preferisci

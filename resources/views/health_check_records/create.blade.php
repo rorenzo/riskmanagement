@@ -22,7 +22,9 @@
                                     <select class="form-select @error('health_surveillance_id') is-invalid @enderror" id="health_surveillance_id" name="health_surveillance_id" required>
                                         <option value="">{{ __('Seleziona un tipo...') }}</option>
                                         @foreach ($surveillanceDataForForm as $hs)
-                                            <option value="{{ $hs->id }}" {{ (old('health_surveillance_id', $preselectedSurveillanceId ?? '') == $hs->id) ? 'selected' : '' }}
+                                            <option value="{{ $hs->id }}" 
+                                                    data-duration-years="{{ $hs->duration_years ?? '' }}"
+                                                    {{ (old('health_surveillance_id', $preselectedSurveillanceId ?? '') == $hs->id) ? 'selected' : '' }}
                                                     class="{{ $hs->status_class }}">
                                                 {{ $hs->name }} 
                                                 @if($hs->is_required)
@@ -41,6 +43,16 @@
                                     <label for="check_up_date" class="form-label">{{ __('Data Visita') }} <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control @error('check_up_date') is-invalid @enderror" id="check_up_date" name="check_up_date" value="{{ old('check_up_date', now()->format('Y-m-d')) }}" required>
                                     @error('check_up_date')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                {{-- Data Scadenza Manuale --}}
+                                <div class="mb-3">
+                                    <label for="expiration_date_manual" class="form-label">{{ __('Data Scadenza Idoneità (Manuale)') }}</label>
+                                    <input type="date" class="form-control @error('expiration_date_manual') is-invalid @enderror" id="expiration_date_manual" name="expiration_date_manual" value="{{ old('expiration_date_manual') }}">
+                                    <small class="form-text text-muted">{{ __('Lasciare vuoto per calcolo automatico in base alla durata del tipo di sorveglianza. Specificare solo se diversa dalla scadenza standard.') }}</small>
+                                    @error('expiration_date_manual')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -91,4 +103,60 @@
             </div>
         </div>
     </div>
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const surveillanceSelect = document.getElementById('health_surveillance_id');
+            const checkUpDateInput = document.getElementById('check_up_date');
+            const expirationDateManualInput = document.getElementById('expiration_date_manual');
+
+            // Dati passati dal controller per il calcolo JS
+            const surveillanceTypesData = @json($surveillanceTypesForJs ?? []);
+
+            function calculateAndSetSuggestedExpiration() {
+                const selectedSurveillanceId = surveillanceSelect.value;
+                const checkUpDateValue = checkUpDateInput.value;
+
+                if (selectedSurveillanceId && checkUpDateValue && !expirationDateManualInput.value) { // Calcola solo se la manuale è vuota
+                    const surveillanceInfo = surveillanceTypesData[selectedSurveillanceId];
+                    if (surveillanceInfo && surveillanceInfo.duration_years && parseInt(surveillanceInfo.duration_years) > 0) {
+                        try {
+                            const checkUpDate = new Date(checkUpDateValue);
+                            checkUpDate.setFullYear(checkUpDate.getFullYear() + parseInt(surveillanceInfo.duration_years));
+                            
+                            // Formatta la data come YYYY-MM-DD per l'input date
+                            const year = checkUpDate.getFullYear();
+                            const month = (checkUpDate.getMonth() + 1).toString().padStart(2, '0');
+                            const day = checkUpDate.getDate().toString().padStart(2, '0');
+                            
+                            expirationDateManualInput.value = `${year}-${month}-${day}`;
+                            // Mostra un placeholder o un testo informativo
+                            expirationDateManualInput.placeholder = `Suggerita: ${day}/${month}/${year}`;
+                        } catch (e) {
+                            console.error("Error parsing date or calculating expiration:", e);
+                            expirationDateManualInput.placeholder = '';
+                        }
+                    } else {
+                        expirationDateManualInput.placeholder = 'Nessuna scadenza standard';
+                        // Potresti voler pulire il campo se non c'è durata o non è selezionato nulla
+                        // expirationDateManualInput.value = '';
+                    }
+                } else if (!expirationDateManualInput.value) {
+                     expirationDateManualInput.placeholder = ''; // Pulisci placeholder se non ci sono i dati per calcolare
+                }
+            }
+
+            if (surveillanceSelect && checkUpDateInput && expirationDateManualInput) {
+                surveillanceSelect.addEventListener('change', calculateAndSetSuggestedExpiration);
+                checkUpDateInput.addEventListener('change', calculateAndSetSuggestedExpiration);
+                
+                // Calcola all'avvio se i campi sono già compilati (es. da old())
+                // Ma solo se expiration_date_manual non ha già un valore da old()
+                if (!expirationDateManualInput.value) {
+                    calculateAndSetSuggestedExpiration();
+                }
+            }
+        });
+    </script>
+    @endpush
 </x-app-layout>

@@ -62,7 +62,7 @@
                             </div>
                         </div>
 
-                        {{-- Rimossi Incarico e Mansione S.P.P. da questo form, gestiti separatamente --}}
+                        {{-- RIMOSSI INCARICO E MANSIONE DA QUESTO FORM --}}
 
                         <hr class="my-4">
                         <h5 class="card-title mb-3">{{ __('Luogo di Nascita') }}</h5>
@@ -77,11 +77,10 @@
                                 <input type="text" class="form-control @error('luogo_nascita_provincia') is-invalid @enderror" id="luogo_nascita_provincia" name="luogo_nascita_provincia" value="{{ old('luogo_nascita_provincia', $profile->luogo_nascita_provincia) }}" maxlength="2" style="text-transform: uppercase;">
                                 @error('luogo_nascita_provincia') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
-                            
                             <div class="col-md-2 mb-3">
                                 <label for="luogo_nascita_nazione" class="form-label">{{ __('Nazione') }}</label>
                                 <input type="text" class="form-control @error('luogo_nascita_nazione') is-invalid @enderror" id="luogo_nascita_nazione" name="luogo_nascita_nazione" value="{{ old('luogo_nascita_nazione', $profile->luogo_nascita_nazione) }}">
-                                @error('luogo_nascita_nazione') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                 @error('luogo_nascita_nazione') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>
 
@@ -123,7 +122,7 @@
                             <div class="col-md-6 mb-3">
                                 <label for="email" class="form-label">{{ __('Email') }}</label>
                                 <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email', $profile->email) }}">
-                                @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                 @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="cellulare" class="form-label">{{ __('Numero di Cellulare') }}</label>
@@ -132,8 +131,6 @@
                             </div>
                         </div>
 
-                        {{-- Rimossa la gestione dell'assegnazione sezione e attività da questo form --}}
-
                         <div class="mt-4 d-flex justify-content-end">
                             <a href="{{ route('profiles.show', $profile->id) }}" class="btn btn-secondary me-2">{{ __('Annulla') }}</a>
                             <button type="submit" class="btn btn-primary">{{ __('Aggiorna Dati Anagrafici') }}</button>
@@ -141,9 +138,6 @@
                     </form>
                 </div>
             </div>
-
-            {{-- Le sezioni per terminare impiego, iniziare nuovo impiego, o eliminare profilo NON sono qui.
-                 Sono accessibili come azioni separate dalla pagina show o da altre liste (es. archivio). --}}
         </div>
     </div>
     @push('scripts')

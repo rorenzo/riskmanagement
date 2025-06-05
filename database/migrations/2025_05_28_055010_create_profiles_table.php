@@ -33,10 +33,6 @@ return new class extends Migration
             $table->string('residenza_cap', 5)->nullable();
             $table->string('residenza_nazione')->nullable()->default('Italia');
 
-            // Non c'è più 'current_section_id' qui.
-            // La sezione corrente si deduce dallo storico in 'profile_section'
-            // e dallo stato in 'periodi_impiego'.
-
             $table->timestamps();
             $table->softDeletes();
         });

@@ -63,28 +63,27 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
         <style>
             #archivedProfilesTable td, #archivedProfilesTable th { vertical-align: middle; }
-            .actions-column { min-width: 200px; white-space: nowrap; } /* Per contenere più pulsanti */
+            .actions-column { min-width: 200px; white-space: nowrap; }
         </style>
     @endpush
 
     @push('scripts')
-        {{-- Rendi i permessi disponibili a JavaScript --}}
         <script>
             @php
-                // Prepara l'array dei permessi in PHP, come passato dal controller
-                // AnagraficaController@archivedIndex
+                // Prepara l'array dei permessi PHP per JavaScript
+                // Assicurati che le chiavi qui corrispondano a quelle usate in AnagraficaController@archivedIndex
                 $jsPermissions = $userPermissions ?? [
-                    'can_view_profile' => false,
-                    'can_edit_profile' => false, // Usato per "Nuovo Impiego"
-                    'can_delete_profile' => false, // Usato per "Elimina Definitivamente"
-                    'can_restore_profile' => false,
+                    'can_view_archived_profile' => false,
+                    'can_restore_archived_profile' => false,
+                    'can_force_delete_archived_profile' => false,
+                    'can_create_new_employment_for_inactive' => false,
                 ];
             @endphp
             const USER_ARCHIVE_PERMISSIONS = {
-                'can_view_profile': {{ $jsPermissions['can_view_profile'] ? 'true' : 'false' }},
-                'create new_employment profile': {{ $jsPermissions['can_edit_profile'] ? 'true' : 'false' }}, // Riusiamo can_edit_profile per questa azione
-                'can_force_delete': {{ $jsPermissions['can_delete_profile'] ? 'true' : 'false' }},
-                'create new_employment profile': {{ $jsPermissions['can_restore_profile'] ? 'true' : 'false' }}
+                'can_view': {{ $jsPermissions['can_view_archived_profile'] ? 'true' : 'false' }},
+                'can_restore': {{ $jsPermissions['can_restore_archived_profile'] ? 'true' : 'false' }},
+                'can_force_delete': {{ $jsPermissions['can_force_delete_archived_profile'] ? 'true' : 'false' }},
+                'can_new_employment': {{ $jsPermissions['can_create_new_employment_for_inactive'] ? 'true' : 'false' }}
             };
         </script>
 
@@ -104,7 +103,7 @@
                             { data: 'cognome', name: 'cognome' },
                             { data: 'nome', name: 'nome' },
                             { data: 'cf', name: 'cf', defaultContent: 'N/D' },
-                            { data: 'stato_attuale_display', name: 'stato_attuale_display', orderable: true }, // Ora ordinabile
+                            { data: 'stato_attuale_display', name: 'stato_attuale_display', orderable: true },
                             {
                                 data: 'id',
                                 name: 'azioni',
@@ -119,11 +118,11 @@
                                     const forceDeleteUrl = "{{ route('admin.profiles.forceDelete', ':id') }}".replace(':id', data);
                                     const newEmploymentUrl = "{{ route('profiles.employment.create.form', ':id') }}".replace(':id', data);
 
-                                    if (USER_ARCHIVE_PERMISSIONS.can_view_profile) {
+                                    if (USER_ARCHIVE_PERMISSIONS.can_view) {
                                         actionsHtml += `<a href="${showUrl}" class="btn btn-sm btn-info me-1" title="{{ __('Visualizza Scheda') }}"><i class="fas fa-eye"></i></a>`;
                                     }
 
-                                    if (row.is_soft_deleted && USER_ARCHIVE_PERMISSIONS.can_restore_profile) {
+                                    if (row.is_soft_deleted && USER_ARCHIVE_PERMISSIONS.can_restore) {
                                         actionsHtml += `<form action="${restoreUrl}" method="POST" class="d-inline" onsubmit="return confirm('{{ __('Sei sicuro di voler ripristinare questo profilo anagrafico?') }}');">
                                                             <input type="hidden" name="_token" value="${csrfToken}">
                                                             <button type="submit" class="btn btn-sm btn-success me-1" title="{{ __('Ripristina Profilo') }}"><i class="fas fa-undo-alt"></i></button>

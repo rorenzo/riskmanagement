@@ -4,27 +4,38 @@ namespace App\Http\Controllers;
 
 use App\Models\PPE;
 use App\Models\Profile;
-use App\Models\Activity; // Per l'assegnazione dei DPI alle attività
-use Illuminate\Http\Request; // Considera FormRequest dedicate
+// use App\Models\Activity; // Commentato se non direttamente usato qui
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str; // Aggiunto se non presente
 
 class PPEController extends Controller
 {
-    
-     public function __construct()
-{
-    $resourceName = 'ppe'; // Chiave usata in PermissionSeeder
-
-        $this->middleware('permission:viewAny ' . $resourceName . '|view ' . $resourceName, ['only' => ['index', 'show', 'showProfiles']]);
+    public function __construct()
+    {
+        $resourceName = 'ppe';
+        $this->middleware('permission:viewAny ' . $resourceName . '|view ' . $resourceName, ['only' => ['index', 'show', 'showProfiles', 'showProfilesWithAttention']]);
         $this->middleware('permission:create ' . $resourceName, ['only' => ['create', 'store']]);
         $this->middleware('permission:update ' . $resourceName, ['only' => ['edit', 'update']]);
         $this->middleware('permission:delete ' . $resourceName, ['only' => ['destroy']]);
-}
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $ppes = PPE::withCount(['risks', 'profiles'])->orderBy('name')->get(); // MODIFICATO
+        // Carica i DPI con il conteggio dei rischi e dei profili assegnati direttamente
+        $ppes = PPE::withCount(['risks', 'profiles'])->orderBy('name')->get();
+
+        // Calcola il conteggio dei profili che necessitano attenzione per ciascun DPI
+        // NOTA: Questo può essere intensivo se ci sono molti DPI e profili.
+        // Considera caching o ottimizzazioni per ambienti di produzione.
+        foreach ($ppes as $ppe) {
+            $ppe->profiles_needing_attention_count = $ppe->profilesNeedingAttentionCount();
+        }
+
         return view('ppes.index', compact('ppes'));
     }
 
@@ -33,22 +44,22 @@ class PPEController extends Controller
      */
     public function create()
     {
-         return view('ppes.create');
+        return view('ppes.create');
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request) // Sostituisci con StorePPERequest
+    public function store(Request $request)
     {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255|unique:ppes,name',
             'description' => 'nullable|string',
         ]);
 
-        $ppe = PPE::create($validatedData);
+        PPE::create($validatedData);
 
-         return redirect()->route('ppes.index')->with('success', 'DPI creato con successo.');
+        return redirect()->route('ppes.index')->with('success', 'DPI creato con successo.');
     }
 
     /**
@@ -56,8 +67,8 @@ class PPEController extends Controller
      */
     public function show(PPE $ppe)
     {
-         $ppe->load(['risks', 'profiles']); // MODIFICATO: carica 'risks'
-         return view('ppes.show', compact('ppe'));
+        $ppe->load(['risks', 'profiles']);
+        return view('ppes.show', compact('ppe'));
     }
 
     /**
@@ -65,13 +76,13 @@ class PPEController extends Controller
      */
     public function edit(PPE $ppe)
     {
-         return view('ppes.edit', compact('ppe'));
+        return view('ppes.edit', compact('ppe'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, PPE $ppe) // Sostituisci con UpdatePPERequest
+    public function update(Request $request, PPE $ppe)
     {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255|unique:ppes,name,' . $ppe->id,
@@ -80,8 +91,7 @@ class PPEController extends Controller
 
         $ppe->update($validatedData);
 
-         return redirect()->route('ppes.index')->with('success', 'DPI aggiornato con successo.');
-//        return response()->json(['message' => 'DPI aggiornato', 'data' => $ppe]); // Placeholder
+        return redirect()->route('ppes.index')->with('success', 'DPI aggiornato con successo.');
     }
 
     /**
@@ -91,8 +101,8 @@ class PPEController extends Controller
     {
         try {
             DB::beginTransaction();
-            $ppe->risks()->detach();     // MODIFICATO: stacca dai rischi
-            $ppe->profiles()->detach();  // Mantenuto se esiste assegnazione diretta
+            $ppe->risks()->detach();
+            $ppe->profiles()->detach();
             $ppe->delete(); // Soft delete
             DB::commit();
             return redirect()->route('ppes.index')->with('success', 'DPI eliminato con successo.');
@@ -102,39 +112,37 @@ class PPEController extends Controller
             return redirect()->route('ppes.index')->with('error', 'Errore durante l\'eliminazione del DPI: ' . $e->getMessage());
         }
     }
-    
+
+    /**
+     * Display a listing of profiles directly assigned this PPE.
+     */
     public function showProfiles(PPE $ppe)
-{
-    // Assumendo che la relazione 'profiles' esista nel modello PPE come definito precedentemente
-    $profiles = $ppe->profiles()
-                    ->whereHas('employmentPeriods', fn($q) => $q->whereNull('data_fine_periodo'))
-                    ->orderBy('cognome')->orderBy('nome')->get();
-    $parentItemType = __('DPI');
-    $parentItemName = $ppe->name;
-    $backUrl = route('ppes.index');
-    return view('profiles.related_list', compact('profiles', 'parentItemType', 'parentItemName', 'ppe', 'backUrl'));
-}
+    {
+        $profiles = $ppe->profiles()
+            ->whereHas('employmentPeriods', fn ($q) => $q->whereNull('data_fine_periodo')) // Solo impiegati attivi
+            ->orderBy('cognome')->orderBy('nome')->get();
 
-    // --- Metodi per associare/dissociare DPI alle attività ---
-    // Questi potrebbero stare anche in ActivityController o in un controller dedicato
+        $parentItemType = __('DPI');
+        $parentItemName = $ppe->name;
+        $backUrl = route('ppes.index');
+        // Non passiamo $attentionDetails qui perché questa è la lista standard
+        return view('profiles.related_list', compact('profiles', 'parentItemType', 'parentItemName', 'ppe', 'backUrl'));
+    }
 
     /**
-     * Mostra il form per assegnare DPI a un'attività.
+     * Display a listing of profiles that NEED ATTENTION for this PPE.
      */
-    // public function assignToActivityForm(Activity $activity)
-    // {
-    //     $ppes = PPE::orderBy('name')->get();
-    //     return view('activities.assign_ppes', compact('activity', 'ppes'));
-    // }
+    public function showProfilesWithAttention(PPE $ppe)
+    {
+        $attentionDetailsCollection = $ppe->getProfilesNeedingAttentionDetails();
 
-    /**
-     * Salva i DPI assegnati a un'attività.
-     */
-    // public function assignToActivityStore(Request $request, Activity $activity)
-    // {
-    //     $request->validate(['ppes' => 'nullable|array']);
-    //     $ppeIds = $request->input('ppes', []);
-    //     $activity->ppes()->sync($ppeIds); // sync gestisce aggiunte e rimozioni
-    //     return redirect()->route('activities.show', $activity->id)->with('success', 'DPI aggiornati per l\'attività.');
-    // }
+        $profiles = $attentionDetailsCollection->map(fn ($item) => $item['profile'])->unique('id')->sortBy('cognome');
+        $attentionDetails = $attentionDetailsCollection->keyBy('profile.id')->map(fn ($item) => $item['reason']);
+
+        $parentItemType = __('DPI');
+        $parentItemName = $ppe->name . " (" . __('Profili con Attenzione') . ")"; // Titolo modificato
+        $backUrl = route('ppes.index');
+
+        return view('profiles.related_list', compact('profiles', 'parentItemType', 'parentItemName', 'ppe', 'backUrl', 'attentionDetails'));
+    }
 }

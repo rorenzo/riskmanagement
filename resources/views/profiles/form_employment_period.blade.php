@@ -43,6 +43,34 @@
                                 @error('ente_provenienza_trasferimento') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
                         </div>
+                        {{-- NUOVI CAMPI INCARICO E MANSIONE --}}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="incarico" class="form-label">{{ __('Incarico Organizzativo') }}</label>
+                                <select class="form-select @error('incarico') is-invalid @enderror" id="incarico" name="incarico">
+                                    <option value="">{{ __('Nessun incarico specifico...') }}</option>
+                                    @if(isset($incarichiDisponibili))
+                                        @foreach ($incarichiDisponibili as $key => $value)
+                                            <option value="{{ $key }}" {{ old('incarico') == $key ? 'selected' : '' }}>{{ $value }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                                @error('incarico') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="mansione" class="form-label">{{ __('Mansione S.P.P. (Sicurezza)') }}</label>
+                                <select class="form-select @error('mansione') is-invalid @enderror" id="mansione" name="mansione">
+                                    <option value="">{{ __('Nessuna mansione S.P.P. specifica...') }}</option>
+                                    @if(isset($mansioniSppDisponibili))
+                                        @foreach ($mansioniSppDisponibili as $key => $value)
+                                            <option value="{{ $key }}" {{ old('mansione') == $key ? 'selected' : '' }}>{{ $value }}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                                @error('mansione') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <label for="note_periodo_impiego" class="form-label">{{ __('Note sul Periodo di Impiego') }}</label>
                             <textarea class="form-control @error('note_periodo_impiego') is-invalid @enderror" id="note_periodo_impiego" name="note_periodo_impiego" rows="2">{{ old('note_periodo_impiego') }}</textarea>
@@ -51,7 +79,7 @@
 
                         <hr class="my-4">
                         <h5 class="card-title mb-3">{{ __('Assegnazione Sezione Iniziale (per questo impiego)') }}</h5>
-                         <div class="alert alert-info small" role="alert">
+                        <div class="alert alert-info small" role="alert">
                             {{__('L\'assegnazione alla sezione è obbligatoria per un nuovo periodo di impiego.')}} <br>
                             {{__('La Data Inizio Assegnazione Sezione non può precedere la Data Inizio del nuovo Periodo di Impiego.')}}
                         </div>

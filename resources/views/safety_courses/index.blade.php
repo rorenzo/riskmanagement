@@ -6,7 +6,7 @@
                 {{ __('Elenco Corsi di Sicurezza') }}
             </h2>
             <div>
-                @can ("create safety course")
+                @can ("create safetyCourse")
                 <a href="{{ route('safety_courses.create') }}" class="btn btn-success btn-sm">
                     <i class="fas fa-plus me-1"></i> {{ __('Aggiungi Corso') }}
                 </a>
@@ -40,32 +40,43 @@
                                     <th>{{ __('Descrizione') }}</th>
                                     <th class="text-center">{{ __('Durata Validità (Anni)') }}</th>
                                     <th class="text-center">{{ __('N. Partecipanti') }}</th>
-                                    <th class="text-center no-sort">{{ __('Profili') }}</th>
+                                    <th class="text-center no-sort">{{ __('Profili Frequentanti') }}</th>
+                                    <th class="text-center no-sort">{{ __('Attenzione') }}</th> {{-- NUOVA COLONNA --}}
                                     <th class="text-center actions-column">{{ __('Azioni') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($safetyCourses as $course)
-                                    <tr>
+                                    <tr class="{{ $course->profiles_needing_attention_count > 0 ? 'table-warning' : '' }}">
                                         <td>{{ $course->name }}</td>
                                         <td>{{ Str::limit($course->description, 70) }}</td>
                                         <td class="text-center">{{ $course->duration_years ?? 'N/A' }}</td>
                                         <td class="text-center">{{ $course->profiles_count ?? $course->profiles->count() }}</td>
                                         <td class="text-center">
-    <a href="{{ route('safety_courses.showProfiles', $course->id) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('Vedi Profili con questo Corso') }}">
-        <i class="fas fa-users"></i>
-    </a>
-</td>
+                                            <a href="{{ route('safety_courses.showProfiles', $course->id) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('Vedi Profili con questo Corso') }}">
+                                                <i class="fas fa-users"></i> ({{ $course->profiles_count ?? $course->profiles->count() }})
+                                            </a>
+                                        </td>
+                                        <td class="text-center"> {{-- NUOVA CELLA --}}
+                                            @if($course->profiles_needing_attention_count > 0)
+                                                <a href="{{ route('safety_courses.showProfilesWithAttention', $course->id) }}" class="btn btn-sm btn-warning" title="{{ __('Vedi Profili che necessitano attenzione per questo corso') }}">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                    ({{ $course->profiles_needing_attention_count }})
+                                                </a>
+                                            @else
+                                                 <span class="text-success" title="{{__('Nessuna attenzione richiesta')}}"><i class="fas fa-check-circle"></i></span>
+                                            @endif
+                                        </td>
                                         <td class="text-center">
                                             <a href="{{ route('safety_courses.show', $course->id) }}" class="btn btn-sm btn-info" title="{{ __('Visualizza') }}">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            @can ("update safety course")
+                                            @can ("update safetyCourse")
                                             <a href="{{ route('safety_courses.edit', $course->id) }}" class="btn btn-sm btn-primary ms-1" title="{{ __('Modifica') }}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             @endcan
-                                            @can ("delete safety course")
+                                            @can ("delete safetyCourse")
                                             <form action="{{ route('safety_courses.destroy', $course->id) }}" method="POST" class="d-inline ms-1" onsubmit="return confirm('{{ __('Sei sicuro di voler eliminare questo corso? Le registrazioni delle frequenze dei profili a questo corso potrebbero essere influenzate o eliminate a seconda della configurazione del database.') }}');">
                                                 @csrf
                                                 @method('DELETE')
@@ -86,21 +97,26 @@
     </div>
 
     @push('styles')
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
         <style>
             #safetyCoursesTable td, #safetyCoursesTable th {
                 vertical-align: middle;
             }
-            
             .actions-column {
-                width: 140px; /* Imposta una larghezza fissa per la colonna */
-                white-space: nowrap; /* Impedisce ai bottoni di andare a capo */
+                width: auto; /* Adattato per potenziali più bottoni */
+                white-space: nowrap;
+            }
+             .table-warning {
+                --bs-table-bg: #fff3cd;
+                --bs-table-border-color: #ffe69c;
+            }
+            .table-warning a.btn-warning {
+                color: #000 !important;
             }
         </style>
     @endpush
 
     @push('scripts')
-        {{-- Assumendo che jQuery e DataTables JS siano globali o in app.js --}}
         <script type="module">
             if (window.$ && typeof window.$.fn.DataTable === 'function') {
                 window.$(document).ready(function() {
@@ -108,10 +124,11 @@
                         language: {
                             url: "{{ asset('js/it-IT.json') }}",
                         },
-                        order: [[1, 'asc']], // Ordina per nome corso
+                        order: [[0, 'asc']], // Ordina per nome corso
                         columnDefs: [
-                            { targets: [2], className: 'text-center' }, // Durata
-                            { targets: [3,4,5], orderable: false, searchable: false, className: 'text-center' } // Azioni (indice aggiornato se N. Partecipanti è commentato)
+                            // Nome(0), Desc(1), Durata(2), N.Part(3), ProfiliFreq(4), Attenzione(5), Azioni(6)
+                            { targets: [2,3], className: 'text-center' },
+                            { targets: [4,5,6], orderable: false, searchable: false, className: 'text-center' }
                         ]
                     });
                 });

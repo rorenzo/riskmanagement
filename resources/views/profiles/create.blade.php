@@ -58,33 +58,6 @@
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="incarico" class="form-label">{{ __('Incarico') }}</label>
-                                <select class="form-select @error('incarico') is-invalid @enderror" id="incarico" name="incarico">
-                                    <option value="">{{ __('Seleziona un incarico...') }}</option>
-                                    @if(isset($incarichiDisponibili))
-                                        @foreach ($incarichiDisponibili as $key => $value)
-                                            <option value="{{ $key }}" {{ old('incarico') == $key ? 'selected' : '' }}>{{ $value }}</option>
-                                        @endforeach
-                                    @endif
-                                </select>
-                                @error('incarico') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="mansione" class="form-label">{{ __('Mansione S.P.P.') }}</label>
-                                <select class="form-select @error('mansione') is-invalid @enderror" id="mansione" name="mansione">
-                                    <option value="">{{ __('Seleziona una mansione S.P.P....') }}</option>
-                                    @if(isset($mansioniSppDisponibili))
-                                        @foreach ($mansioniSppDisponibili as $key => $value)
-                                            <option value="{{ $key }}" {{ old('mansione') == $key ? 'selected' : '' }}>{{ $value }}</option>
-                                        @endforeach
-                                    @endif
-                                </select>
-                                @error('mansione') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            </div>
-                        </div>
-
                         <hr class="my-4">
                         <h5 class="card-title mb-3">{{ __('Luogo di Nascita') }}</h5>
                         <div class="row">

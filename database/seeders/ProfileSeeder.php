@@ -36,8 +36,6 @@ class ProfileSeeder extends Seeder
                 'residenza_provincia' => 'RM', //
                 'residenza_cap' => '00100', //
                 'residenza_nazione' => 'Italia', //
-                'incarico' => 'capo sezione', // Esempio, può essere null
-                'mansione' => 'dirigente',   // Esempio, Mansione S.P.P., può essere null
             ],
             [
                 'grado' => 'Tenente', //
@@ -56,8 +54,6 @@ class ProfileSeeder extends Seeder
                 'residenza_provincia' => 'MI', //
                 'residenza_cap' => '20100', //
                 'residenza_nazione' => 'Italia', //
-                'incarico' => 'addetto', //
-                'mansione' => 'lavoratore', //
             ],
             [
                 'grado' => 'Maresciallo', //
@@ -76,8 +72,6 @@ class ProfileSeeder extends Seeder
                 'residenza_provincia' => 'NA', //
                 'residenza_cap' => '80100', //
                 'residenza_nazione' => 'Italia', //
-                'incarico' => 'addetto', //
-                'mansione' => 'preposto', //
             ],
             [
                 'grado' => 'Sergente', //
@@ -96,8 +90,6 @@ class ProfileSeeder extends Seeder
                 'residenza_provincia' => 'FI', //
                 'residenza_cap' => '50100', //
                 'residenza_nazione' => 'Italia', //
-                'incarico' => null, // Non assegnato
-                'mansione' => 'lavoratore', //
             ],
         ];
 
