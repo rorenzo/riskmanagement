@@ -30,6 +30,7 @@
             <file>file://192.168.56.101/allusers/riskmanagement/resources/views/profiles/pdf_export.blade.php</file>
             <file>file://192.168.56.101/allusers/riskmanagement/resources/views/dashboard.blade.php</file>
             <file>file://192.168.56.101/allusers/riskmanagement/README.md</file>
+            <file>file://192.168.56.101/allusers/riskmanagement/.env</file>
         </group>
     </open-files>
 </project-private>

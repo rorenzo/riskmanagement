@@ -31,7 +31,7 @@ Route::get('/', function () {
     $activeProfiles = Profile::whereHas('employmentPeriods', fn ($q) => $q->whereNull('data_fine_periodo'))
         ->with([
             'activities.safetyCourses', 
-            'safetyCourses.pivot', 
+            'safetyCourses', 
             'activities.healthSurveillances',
             'healthCheckRecords.healthSurveillance'
         ])
