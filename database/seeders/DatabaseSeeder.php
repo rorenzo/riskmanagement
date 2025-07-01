@@ -21,11 +21,11 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             OfficeSeeder::class,
             SectionSeeder::class,
-            ProfileSeeder::class,
-            ActivitySeeder::class,
+          //  ProfileSeeder::class,
+           // ActivitySeeder::class,
             PPESeeder::class,
             HealthSurveillanceSeeder::class,
-            HealthCheckRecordSeeder::class,
+          //  HealthCheckRecordSeeder::class,
             SafetyCourseSeeder::class,
             // Aggiungi qui altri seeder specifici per i tuoi dati (es. AnagraficheSeeder, ecc.)
         ]);
