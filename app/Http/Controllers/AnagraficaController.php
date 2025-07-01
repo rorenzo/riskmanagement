@@ -1056,7 +1056,7 @@ class AnagraficaController extends Controller
         $activeProfiles = Profile::whereHas('employmentPeriods', fn ($q) => $q->whereNull('data_fine_periodo'))
             ->with([
                 'activities.safetyCourses', // Ottiene i corsi richiesti dalle attività
-                'safetyCourses.pivot'       // Ottiene le frequenze dei corsi del profilo
+                'safetyCourses'       // Ottiene le frequenze dei corsi del profilo
             ])
             ->get();
 
