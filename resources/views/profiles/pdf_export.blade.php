@@ -47,10 +47,24 @@
         .col-6:last-child { margin-right: 0; }
         .clearfix::after {  content: ""; clear: both; display: table; }
 
+        /* New style for logo */
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo img {
+            max-width: 150px; /* Adjust as needed */
+            height: auto;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        {{-- Logo Section --}}
+        <div class="logo">
+            <img src="{{ public_path('images/logo.png') }}" alt="Logo">
+        </div>
+
         <div class="header">
             <h1>SCHEDA ANAGRAFICA E DI SICUREZZA</h1>
             <h2>{{ $profile->grado ? $profile->grado . ' ' : '' }}{{ $profile->cognome }} {{ $profile->nome }}</h2>
@@ -105,9 +119,9 @@
                     @if ($currentSection && $currentSection->office)
                         <p><strong>Ufficio:</strong> {{ $currentSection->office->nome ?? 'N/D' }}</p>
                     @else
-                         <p><strong>Ufficio:</strong> {{ $profile->sectionHistory->first()->office->nome ?? 'Non assegnato a Ufficio / Sezione' }}</p>
+                           <p><strong>Ufficio:</strong> {{ $profile->sectionHistory->first()->office->nome ?? 'Non assegnato a Ufficio / Sezione' }}</p>
                     @endif
-                     <p><strong>Sezione:</strong> {{ $currentSection->nome ?? 'Non assegnato a Sezione' }}</p>
+                    <p><strong>Sezione:</strong> {{ $currentSection->nome ?? 'Non assegnato a Sezione' }}</p>
                     <p><strong>Incarico Organizzativo:</strong> {{ $currentEmploymentPeriod->incarico_display_name ?? 'N/D' }}</p>
                     <p><strong>Mansione S.P.P.:</strong> {{ $currentEmploymentPeriod->mansione_spp_display_name ?? 'N/D' }}</p>
                 @else
@@ -137,7 +151,7 @@
             <div class="card-header">Rischi Connessi (derivati dalle attività)</div>
             <div class="card-body">
                 @if($connectedRisks->isNotEmpty())
-                     <ul class="list-group">
+                    <ul class="list-group">
                         @foreach($connectedRisks as $risk)
                             <li class="list-group-item">{{ $risk->name }} <span class="text-muted">- Tipologia: {{ $risk->tipologia ?? 'N/D' }}</span></li>
                         @endforeach
@@ -152,15 +166,15 @@
         <div class="card">
             <div class="card-header">DPI Assegnati / Necessari</div>
             <div class="card-body">
-                 @if($allPpesForProfile->isNotEmpty())
-                    <ul class="list-group">
-                        @foreach($allPpesForProfile as $ppe)
-                            <li class="list-group-item">{{ $ppe->name }}</li>
-                        @endforeach
-                    </ul>
-                @else
-                    <p class="text-muted">Nessun DPI assegnato o specificamente richiesto dai rischi delle attività.</p>
-                @endif
+                    @if($allPpesForProfile->isNotEmpty())
+                        <ul class="list-group">
+                            @foreach($allPpesForProfile as $ppe)
+                                <li class="list-group-item">{{ $ppe->name }}</li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <p class="text-muted">Nessun DPI assegnato o specificamente richiesto dai rischi delle attività.</p>
+                    @endif
             </div>
         </div>
 
