@@ -8,10 +8,10 @@
                     <div class="card-body p-4">
                         <div class="text-center w-75 m-auto mb-4">
                             <a href="{{ route('login') }}"> {{-- O la rotta della home page --}}
-                                {{-- Se hai un logo come componente, assicurati sia responsive --}}
-                                {{-- <x-application-logo width="82" /> --}}
-                                <h4>{{ __('Log In') }}</h4>
+                                <img src="{{ asset('images/logo.png') }}" alt="{{ config('app.name', 'Laravel') }} Logo" class="img-fluid" style="max-height: 220px;">
                             </a>
+                            {{-- Testo sotto il logo --}}
+                            <h5 class="mt-2 text-muted">MARICENPROG<br>Risk Management web portal</h5>
                         </div>
 
                         @if (session('status'))
@@ -46,10 +46,10 @@
                             <div class="mb-3">
                                 <div class="form-check">
                                     <input id="remember_me" type="checkbox" class="form-check-input" name="remember">
-                                    <label for="remember_me" class="form-check-label">{{ __('Remember me') }}</label>
+                                    <label for="remember_me" class="form-check-label">{{ __('Ricorda sessione') }}</label>
                                 </div>
                             </div>
-
+<!--
                             <div class="d-flex align-items-center justify-content-between mb-3">
                                 @if (Route::has('password.request'))
                                     <a class="text-muted" href="{{ route('password.request') }}">
@@ -57,7 +57,7 @@
                                     </a>
                                 @endif
                             </div>
-
+-->
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-primary">
                                     {{ __('Log in') }}
@@ -68,9 +68,18 @@
                             {{--
                             @if (Route::has('register'))
                                 <p class="text-center mt-3">
-<small>{{ __("Don't have an account?") }} <a href="{{ route('register') }}">{{ __('Sign Up') }}</a></small>
+                                    <small>{{ __("Don't have an account?") }} <a href="{{ route('register') }}">{{ __('Sign Up') }}</a></small>
                                 </p>
                             @endif
                             --}}
                         </form>
-                    </div> </div> </div> </div> </div> </x-guest-layout>
+                    </div>
+                </div>
+                {{-- Copyright in fondo --}}
+                <div class="text-center mt-4">
+                    <p class="text-muted mb-0"><small>&copy; rorenzo</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</x-guest-layout>
